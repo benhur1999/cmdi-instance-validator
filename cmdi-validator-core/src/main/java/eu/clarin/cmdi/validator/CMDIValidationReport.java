@@ -62,6 +62,7 @@ public interface CMDIValidationReport {
         public abstract int priority();
     } // enum Severity
 
+
     public interface Message {
         public Severity getSeverity();
 
@@ -114,4 +115,4 @@ public interface CMDIValidationReport {
 
     public int getMessageCount(Severity severity);
 
-} // CMDIValidatorResult
+} // interface CMDIValidationReport

@@ -228,4 +228,4 @@ final class CMDIWriteableValidatonReportImpl implements CMDIWriteableValidationR
         }
     } // class MessageImpl
 
-} // class CMDIValidatorWriteableResultImpl
+} // class CMDIWriteableValidatonReportImpl

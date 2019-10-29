@@ -16,7 +16,6 @@
  */
 package eu.clarin.cmdi.validator;
 
-
 public final class Version {
 
     private Version() {

@@ -580,7 +580,6 @@ public class CMDIValidatorTool {
         private boolean isCompleted = false;
         private final Object waiter = new Object();
 
-
         private Handler(boolean verbose) {
             this.verbose = verbose;
         }
@@ -612,6 +611,7 @@ public class CMDIValidatorTool {
         public int getValidFileCount() {
             return filesTotal.get() - filesInvalid.get();
         }
+
 
         public int getInvalidFileCount() {
             return filesInvalid.get();

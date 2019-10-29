@@ -102,11 +102,13 @@ public class CMDIValidatorConfig {
     public int getConnectTimeout() {
         return connectTimeout;
     }
-    
+
+
     public int getSocketTimeout() {
         return socketTimeout;
     }
-    
+
+
     public static class Builder {
         private final CMDIValidatorConfig config;
 
@@ -195,15 +197,18 @@ public class CMDIValidatorConfig {
             return this;
         }
 
+
         public Builder connectTimeout(int connectTimeout) {
             config.connectTimeout = connectTimeout;
             return this;
         }
 
+
         public Builder socketTimeout(int socketTimeout) {
             config.socketTimeout = socketTimeout;
             return this;
         }
+
 
         public CMDIValidatorConfig build() {
             return config;
@@ -211,4 +216,4 @@ public class CMDIValidatorConfig {
 
     } // class Builder
 
-} // CMDIValidatorFactoryConfig
+} // class CMDIValidatorFactoryConfig

@@ -108,7 +108,6 @@ public class ThreadedCMDIValidatorProcessor implements CMDIValidatorProcessor {
     }
 
 
-
     private class Worker implements Runnable {
         private final CountDownLatch goLatch;
 
@@ -168,4 +167,3 @@ public class ThreadedCMDIValidatorProcessor implements CMDIValidatorProcessor {
     }
 
 } // class ThreadedCMDIValidatorProcessor
-

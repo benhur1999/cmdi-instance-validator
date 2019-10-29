@@ -615,8 +615,6 @@ public final class CMDIValidator {
 
 
         private void validate(final TFile file) throws CMDIValidatorException {
-
-
             try {
                 report = new CMDIWriteableValidatonReportImpl();
 

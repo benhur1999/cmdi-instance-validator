@@ -223,4 +223,4 @@ public class CheckHandlesExtension extends CMDIValidatorExtension {
         }
     }
 
-} // CheckHandleExtension
+} // class CheckHandlesExtension
