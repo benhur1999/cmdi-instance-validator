@@ -25,6 +25,9 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import net.java.truevfs.access.TFile;
 import net.java.truevfs.access.TVFS;
 import net.java.truevfs.kernel.spec.FsSyncException;
@@ -56,6 +59,7 @@ import eu.clarin.cmdi.validator.utils.HandleResolver;
 
 public class CMDIValidatorTool {
     private static final String PRG_NAME                   = "cmdi-validator";
+    private static final long DEFAULT_MAX_FILE_SIZE        = 10 * 1024 * 1024; 
     private static final long DEFAULT_PROGRESS_INTERVAL    = 15000;
     private static final Locale LOCALE                     = Locale.ENGLISH;
     private static final String OPT_DEBUG                  = "d";
@@ -65,6 +69,8 @@ public class CMDIValidatorTool {
     private static final String OPT_THREAD_COUNT           = "t";
     private static final String OPT_NO_THREADS             = "T";
     private static final String OPT_NO_ESTIMATE            = "E";
+    private static final String OPT_MAX_FILESIZE           = "l";
+    private static final String OPT_NO_MAX_FILESIZE        = "L";
     private static final String OPT_SCHEMA_CACHE_DIR       = "c";
     private static final String OPT_NO_SCHEMATRON          = "S";
     private static final String OPT_SCHEMATRON_FILE        = "s";
@@ -85,6 +91,7 @@ public class CMDIValidatorTool {
         boolean verbose             = false;
         int threadCount             = Runtime.getRuntime().availableProcessors();
         boolean estimate            = true;
+        long maxFileSize            = DEFAULT_MAX_FILE_SIZE;
         long progressInterval       = DEFAULT_PROGRESS_INTERVAL;
         File schemaCacheDir         = null;
         boolean disableSchematron   = false;
@@ -101,20 +108,35 @@ public class CMDIValidatorTool {
             final CommandLineParser parser = new DefaultParser();
             final CommandLine line = parser.parse(options, args);
             // check incompatible combinations
+            if (line.hasOption(OPT_MAX_FILESIZE) && line.hasOption(OPT_NO_MAX_FILESIZE)) {
+                throw new ParseException(String.format(
+                        "The %s and %s options are mutually exclusive",
+                        OPT_MAX_FILESIZE, OPT_NO_MAX_FILESIZE));
+            }
             if (line.hasOption(OPT_THREAD_COUNT) && line.hasOption(OPT_NO_THREADS)) {
-                throw new ParseException("The -t and -T options are mutually exclusive");
+                throw new ParseException(String.format(
+                        "The %s and %s options are mutually exclusive",
+                        OPT_THREAD_COUNT, OPT_NO_THREADS));
             }
             if (line.hasOption(OPT_DEBUG) && line.hasOption(OPT_QUIET)) {
-                throw new ParseException("The -d and -q switches are mutually exclusive");
+                throw new ParseException(String.format(
+                        "The %s and %s options are mutually exclusive",
+                        OPT_DEBUG, OPT_QUIET));
             }
             if (line.hasOption(OPT_VERBOSE) && line.hasOption(OPT_QUIET)) {
-                throw new ParseException("The -v and -q switches are mutually exclusive");
+                throw new ParseException(String.format(
+                        "The %s and %s options are mutually exclusive",
+                        OPT_VERBOSE, OPT_QUIET));
             }
             if (line.hasOption(OPT_NO_SCHEMATRON) && line.hasOption(OPT_SCHEMATRON_FILE)) {
-                throw new ParseException("The -s and -S options are mutually exclusive");
+                throw new ParseException(String.format(
+                        "The %s and %s options are mutually exclusive",
+                        OPT_NO_SCHEMATRON, OPT_SCHEMATRON_FILE));
             }
             if (line.hasOption(OPT_CHECK_PIDS) && line.hasOption(OPT_CHECK_AND_RESOLVE_PIDS)) {
-                throw new ParseException("The -p and -P options are mutually exclusive");
+                throw new ParseException(String.format(
+                        "The %s and %s options are mutually exclusive",
+                        OPT_CHECK_PIDS, OPT_CHECK_AND_RESOLVE_PIDS));
             }
 
             // extract options
@@ -150,6 +172,13 @@ public class CMDIValidatorTool {
             }
             if (line.hasOption(OPT_NO_ESTIMATE) || (progressInterval < 0)) {
                 estimate = false;
+            }
+            if (line.hasOption(OPT_MAX_FILESIZE)) {
+                maxFileSize = parseMaxFileOption(
+                        line.getOptionValue(OPT_MAX_FILESIZE));
+            }
+            if (line.hasOption(OPT_NO_MAX_FILESIZE)) {
+                maxFileSize = 0;
             }
             if (line.hasOption(OPT_SCHEMA_CACHE_DIR)) {
                 String dir = line.getOptionValue(OPT_SCHEMA_CACHE_DIR);
@@ -251,6 +280,9 @@ public class CMDIValidatorTool {
 
                     final CMDIValidatorConfig.Builder builder =
                             new CMDIValidatorConfig.Builder(archive, handler);
+                    logger.debug("skipping files larger than {} bytes",
+                            maxFileSize);
+                    builder.maxFileSize(maxFileSize);
                     if (schemaCacheDir != null) {
                         builder.schemaCacheDirectory(schemaCacheDir);
                     }
@@ -351,12 +383,13 @@ public class CMDIValidatorTool {
                         bps = handler.getTotalBytes() / handler.getTimeElapsed();
                     }
 
-                    logger.info("time elapsed: {}, validation result: {}% failure rate (files: {} total, {} passed, {} failed; {} total, {} files/second, {}/second)",
+                    logger.info("time elapsed: {}, validation result: {}% failure rate (files: {} total, {} passed, {} failed; {} skipped, {} total, {} files/second, {}/second)",
                             Humanize.duration(handler.getTimeElapsed(), LOCALE),
                             String.format(LOCALE, "%.2f", handler.getFailureRate() * 100f),
                             handler.getTotalFileCount(),
                             handler.getValidFileCount(),
                             handler.getInvalidFileCount(),
+                            handler.getSkippedFileCount(),
                             Humanize.binaryPrefix(handler.getTotalBytes(), LOCALE),
                             ((fps != -1) ? fps : "N/A"),
                             ((bps != -1) ? Humanize.binaryPrefix(bps, LOCALE) : "N/A MB"));
@@ -438,41 +471,81 @@ public class CMDIValidatorTool {
                 .longOpt("no-estimate")
                 .desc("disable gathering of total file count for progress reporting")
                 .build());
+        OptionGroup g3 = new OptionGroup();
+        g3.addOption(Option.builder(OPT_MAX_FILESIZE)
+                .hasArg()
+                .argName("SIZE")
+                .longOpt("max-file-size")
+                .desc(String.format("maximum file size to process (default: %s)",
+                        Humanize.binaryPrefix(DEFAULT_MAX_FILE_SIZE, LOCALE)))
+                .build());
+        g3.addOption(Option.builder(OPT_NO_MAX_FILESIZE)
+                 .longOpt("process-all")
+                 .desc("process all files regardless of size")
+                 .build());
+        options.addOptionGroup(g3);
+        
         options.addOption(Option.builder(OPT_SCHEMA_CACHE_DIR)
                 .hasArg()
                 .argName("DIRECTORY")
                 .longOpt("schema-cache-dir")
                 .desc("schema caching directory")
                 .build());
-        OptionGroup g3 = new OptionGroup();
-        g3.addOption(Option.builder(OPT_NO_SCHEMATRON)
+        OptionGroup g4 = new OptionGroup();
+        g4.addOption(Option.builder(OPT_NO_SCHEMATRON)
                 .longOpt("no-schematron")
                 .desc("disable Schematron validator")
                 .build());
-        g3.addOption(Option.builder(OPT_SCHEMATRON_FILE)
+        g4.addOption(Option.builder(OPT_SCHEMATRON_FILE)
                 .hasArg()
                 .argName("FILE")
                 .longOpt("schematron-file")
                 .desc("load Schematron schema from file")
                 .build());
-        options.addOptionGroup(g3);
+        options.addOptionGroup(g4);
         options.addOption(Option.builder(OPT_FILENAME_FILTER)
                 .hasArg()
                 .argName("WILDCARD")
                 .longOpt("file-filter")
                 .desc("only process filenames matching a wildcard")
                 .build());
-        OptionGroup g4 = new OptionGroup();
-        g4.addOption(Option.builder(OPT_CHECK_PIDS)
+        OptionGroup g5 = new OptionGroup();
+        g5.addOption(Option.builder(OPT_CHECK_PIDS)
                 .longOpt("check-pids")
                 .desc("check persistent identifiers syntax")
                 .build());
-        g4.addOption(Option.builder(OPT_CHECK_AND_RESOLVE_PIDS)
+        g5.addOption(Option.builder(OPT_CHECK_AND_RESOLVE_PIDS)
                 .longOpt("check-and-resolve-pids")
                 .desc("check persistent identifiers syntax and if they resolve properly")
                 .build());
-        options.addOptionGroup(g4);
+        options.addOptionGroup(g5);
         return options;
+    }
+
+
+    private static long parseMaxFileOption(String s) throws ParseException {
+        final Matcher m = Pattern
+                .compile("^(\\d+)\\s*(?:([KMGT])B?)?$", Pattern.CASE_INSENSITIVE)
+                .matcher(s);
+        if (m.matches()) {
+            long size = Long.parseLong(m.group(1));
+            String unit = m.group(2);
+            if (unit != null) {
+                unit = unit.toUpperCase();
+                if ("K".equals(unit)) {
+                    size *= 1024l;
+                } else if ("M".equals(unit)) {
+                    size *= 1048576l;
+                } else if ("G".equals(unit)) {
+                    size *= 1073741824l;
+                } else if ("T".equals(unit)) {
+                    size *= 1099511627776l;
+                }
+            }
+            return size;
+        } else {
+            throw new ParseException(String.format("invalid size: %s", s));
+        }
     }
 
 
@@ -501,6 +574,7 @@ public class CMDIValidatorTool {
         private long started               = -1;
         private long finished              = -1;
         private AtomicInteger filesTotal   = new AtomicInteger();
+        private AtomicInteger filesSkipped = new AtomicInteger();
         private AtomicInteger filesInvalid = new AtomicInteger();
         private AtomicLong    totalBytes   = new AtomicLong();
         private boolean isCompleted = false;
@@ -527,6 +601,11 @@ public class CMDIValidatorTool {
 
         public int getTotalFileCount() {
             return filesTotal.get();
+        }
+
+
+        public int getSkippedFileCount() {
+            return filesSkipped.get();
         }
 
 
@@ -602,79 +681,89 @@ public class CMDIValidatorTool {
         @Override
         public void onValidationReport(final CMDIValidationReport report)
                 throws CMDIValidatorException {
-            filesTotal.incrementAndGet();
 
             final File file = report.getFile();
-            if (file != null) {
-                totalBytes.getAndAdd(file.length());
-            }
-
-            switch (report.getHighestSeverity()) {
-            case INFO:
-                logger.debug("file '{}' is valid", file);
-                break;
-            case WARNING:
+            if (report.isFileSkipped()) {
+                filesSkipped.incrementAndGet();
                 if (verbose) {
-                    logger.warn("file '{}' is valid (with warnings):", file);
-                    for (Message msg : report.getMessages()) {
-                        if ((msg.getLineNumber() != -1) &&
-                                (msg.getColumnNumber() != -1)) {
-                            logger.warn(" ({}) {} [line={}, column={}]",
-                                    msg.getSeverity().getShortcut(),
-                                    msg.getMessage(),
-                                    msg.getLineNumber(),
-                                    msg.getColumnNumber());
+                    logger.info("file '{}' was skipped", file);
+                }
+            } else {
+                filesTotal.incrementAndGet();
+                if (file != null) {
+                    totalBytes.getAndAdd(file.length());
+                }
+
+                switch (report.getHighestSeverity()) {
+                case INFO:
+                    logger.debug("file '{}' is valid", file);
+                    break;
+                case WARNING:
+                    if (verbose) {
+                        logger.warn("file '{}' is valid (with warnings):",
+                                file);
+                        for (Message msg : report.getMessages()) {
+                            if ((msg.getLineNumber() != -1) &&
+                                    (msg.getColumnNumber() != -1)) {
+                                logger.warn(" ({}) {} [line={}, column={}]",
+                                        msg.getSeverity().getShortcut(),
+                                        msg.getMessage(), msg.getLineNumber(),
+                                        msg.getColumnNumber());
+                            } else {
+                                logger.warn(" ({}) {}",
+                                        msg.getSeverity().getShortcut(),
+                                        msg.getMessage());
+                            }
+                        }
+                    } else {
+                        Message msg = report.getFirstMessage(Severity.WARNING);
+                        int count = report.getMessageCount(Severity.WARNING);
+                        if (count > 1) {
+                            logger.warn(
+                                    "file '{}' is valid (with warnings): {} ({} more warnings)",
+                                    file, msg.getMessage(), (count - 1));
                         } else {
-                            logger.warn(" ({}) {}",
-                                    msg.getSeverity().getShortcut(),
+                            logger.warn(
+                                    "file '{}' is valid (with warnings): {}",
+                                    file, msg.getMessage());
+                        }
+                    }
+                    break;
+                case ERROR:
+                    filesInvalid.incrementAndGet();
+                    if (verbose) {
+                        logger.error("file '{}' is invalid:", file);
+                        for (Message msg : report.getMessages()) {
+                            if ((msg.getLineNumber() != -1) &&
+                                    (msg.getColumnNumber() != -1)) {
+                                logger.error(" ({}) {} [line={}, column={}]",
+                                        msg.getSeverity().getShortcut(),
+                                        msg.getMessage(), msg.getLineNumber(),
+                                        msg.getColumnNumber());
+                            } else {
+                                logger.error(" ({}) {}",
+                                        msg.getSeverity().getShortcut(),
+                                        msg.getMessage());
+                            }
+                        }
+                    } else {
+                        Message msg = report.getFirstMessage(Severity.ERROR);
+                        int count = report.getMessageCount(Severity.ERROR);
+                        if (count > 1) {
+                            logger.error(
+                                    "file '{}' is invalid: {} ({} more errors)",
+                                    file, msg.getMessage(), (count - 1));
+                        } else {
+                            logger.error("file '{}' is invalid: {}", file,
                                     msg.getMessage());
                         }
                     }
-                } else {
-                    Message msg = report.getFirstMessage(Severity.WARNING);
-                    int count   = report.getMessageCount(Severity.WARNING);
-                    if (count > 1) {
-                        logger.warn("file '{}' is valid (with warnings): {} ({} more warnings)",
-                                file, msg.getMessage(), (count - 1));
-                    } else {
-                        logger.warn("file '{}' is valid (with warnings): {}",
-                                file, msg.getMessage());
-                    }
-                }
-                break;
-            case ERROR:
-                filesInvalid.incrementAndGet();
-                if (verbose) {
-                    logger.error("file '{}' is invalid:", file);
-                    for (Message msg : report.getMessages()) {
-                        if ((msg.getLineNumber() != -1) &&
-                                (msg.getColumnNumber() != -1)) {
-                            logger.error(" ({}) {} [line={}, column={}]", msg
-                                    .getSeverity().getShortcut(), msg
-                                    .getMessage(), msg.getLineNumber(), msg
-                                    .getColumnNumber());
-                        } else {
-                            logger.error(" ({}) {}", msg.getSeverity()
-                                    .getShortcut(), msg.getMessage());
-                        }
-                    }
-                } else {
-                    Message msg = report.getFirstMessage(Severity.ERROR);
-                    int count   = report.getMessageCount(Severity.ERROR);
-                    if (count > 1) {
-                        logger.error(
-                                "file '{}' is invalid: {} ({} more errors)",
-                                file, msg.getMessage(), (count - 1));
-                    } else {
-                        logger.error("file '{}' is invalid: {}", file,
-                                msg.getMessage());
-                    }
-                }
-                break;
-            default:
-                throw new CMDIValidatorException("unexpected severity: " +
-                        report.getHighestSeverity());
-            } // switch
+                    break;
+                default:
+                    throw new CMDIValidatorException("unexpected severity: " +
+                            report.getHighestSeverity());
+                } // switch
+            }
         }
     } // class Handler
 

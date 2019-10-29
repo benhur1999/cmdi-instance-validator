@@ -7,6 +7,7 @@ import java.util.List;
 
 final class CMDIWriteableValidatonReportImpl implements CMDIWriteableValidationReport {
     private File file;
+    private boolean fileSkipped;
     private List<Message> messages;
     private Severity highestSeverity = Severity.INFO;
 
@@ -18,8 +19,15 @@ final class CMDIWriteableValidatonReportImpl implements CMDIWriteableValidationR
 
 
     @Override
-    public void setFile(File file) {
+    public boolean isFileSkipped() {
+        return fileSkipped;
+    }
+
+
+    @Override
+    public void setFile(File file, boolean fileSkipped) {
         this.file = file;
+        this.fileSkipped = fileSkipped;
     }
 
 

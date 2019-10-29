@@ -27,6 +27,7 @@ public class CMDIValidatorConfig {
     private final File root;
     private final CMDIValidationHandler handler;
     private FileFilter fileFilter = null;
+    private long maxFileSize = 0;
     private File schemaCacheDirectory = null;
     private CMDISchemaLoader schemaLoader = null;
     private File schematronSchemaFile = null;
@@ -56,6 +57,11 @@ public class CMDIValidatorConfig {
 
     public FileFilter getFileFilter() {
         return fileFilter;
+    }
+
+
+    public long getMaxFileSize() {
+        return maxFileSize;
     }
 
 
@@ -118,6 +124,15 @@ public class CMDIValidatorConfig {
 
         public Builder fileFilter(final FileFilter fileFilter) {
             config.fileFilter = fileFilter;
+            return this;
+        }
+
+
+        public Builder maxFileSize(final long maxFileSize) {
+            if (maxFileSize < 0) {
+                throw new IllegalArgumentException("maxFileSize needs to be larger or equal to zero");
+            }
+            config.maxFileSize = maxFileSize;
             return this;
         }
 

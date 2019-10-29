@@ -20,7 +20,7 @@ import java.io.File;
 
 public interface CMDIWriteableValidationReport extends CMDIValidationReport {
 
-    public void setFile(File file);
+    public void setFile(File file, boolean fileSkipped);
     
     public void reportInfo(int line, int col, String message);
 

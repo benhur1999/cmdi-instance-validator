@@ -125,6 +125,7 @@ public final class CMDIValidator {
     private final XQueryExecutable analyzeSchematronReport;
     private final List<CMDIValidatorExtension> extensions;
     private final FileEnumerator files;
+    private final long maxFileSize;
     private final CMDIValidationHandler handler;
     private final Map<Thread, ThreadContext> contexts =
             new ConcurrentHashMap<Thread, ThreadContext>();
@@ -138,8 +139,9 @@ public final class CMDIValidator {
         this(config, config.getRoot(), config.getHandler());
     }
 
-    public CMDIValidator(final CMDIValidatorConfig config, final File src, CMDIValidationHandler handler)
-            throws CMDIValidatorInitException {
+
+    public CMDIValidator(final CMDIValidatorConfig config, final File src,
+            CMDIValidationHandler handler) throws CMDIValidatorInitException {
         if (config == null) {
             throw new NullPointerException("config == null");
         }
@@ -234,6 +236,7 @@ public final class CMDIValidator {
          */
         final TFile root = new TFile(src);
         this.files       = new FileEnumerator(root, config.getFileFilter());
+        this.maxFileSize = config.getMaxFileSize();
         if (config.getHandler() == null) {
             throw new NullPointerException("handler == null");
         }
@@ -612,60 +615,71 @@ public final class CMDIValidator {
 
 
         private void validate(final TFile file) throws CMDIValidatorException {
-            TFileInputStream stream = null;
+
+
             try {
-
-                /*
-                 * step 0: prepare
-                 */
-                logger.debug("validating file '{}' ({} bytes)",
-                        file, file.length());
                 report = new CMDIWriteableValidatonReportImpl();
-                report.setFile(file);
-                stream = new TFileInputStream(file);
 
-                /*
-                 * step 1: parse document and perform schema validation
-                 */
-                final XdmNode document = parseInstance(stream);
+                if ((maxFileSize > 0) && (file.length() > maxFileSize)) {
+                    logger.debug("skipping file '{}' ({} bytes)",
+                            file, file.length());
+                    report.setFile(file, true);
+                } else {
+                    TFileInputStream stream = null;
+                    try {
+                        logger.debug("validating file '{}' ({} bytes)", file,
+                                file.length());
+                        report.setFile(file, false);
 
-                if (document != null) {
-                    /*
-                     * step 2: perform Schematron validation
-                     */
-                    if (schematronValidator != null) {
-                        validateSchematron(document);
-                    }
+                        /*
+                         * step 0: prepare
+                         */
+                        stream = new TFileInputStream(file);
 
-                    /*
-                     * step 3: run extensions, if any
-                     */
-                    if (extensions != null) {
-                        for (CMDIValidatorExtension extension : extensions) {
-                            extension.validate(document, report);
+                        /*
+                         * step 1: parse document and perform schema validation
+                         */
+                        final XdmNode document = parseInstance(stream);
+
+                        if (document != null) {
+                            /*
+                             * step 2: perform Schematron validation
+                             */
+                            if (schematronValidator != null) {
+                                validateSchematron(document);
+                            }
+
+                            /*
+                             * step 3: run extensions, if any
+                             */
+                            if (extensions != null) {
+                                for (CMDIValidatorExtension extension : extensions) {
+                                    extension.validate(document, report);
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new CMDIValidatorException(
+                                "error reading file '" + file + "'", e);
+                    } catch (CMDIValidatorException e) {
+                        throw e;
+                    } finally {
+                        try {
+                            if (stream != null) {
+                                stream.close();
+                            }
+                        } catch (IOException e) {
+                            throw new CMDIValidatorException(
+                                    "error closing file '" + file + "'", e);
                         }
                     }
                 }
-            } catch (IOException e) {
-                throw new CMDIValidatorException(
-                        "error reading file '" + file + "'", e);
-            } catch (CMDIValidatorException e) {
-                throw e;
             } finally {
-                try {
-                    if (stream != null) {
-                        stream.close();
-                    }
-                } catch (IOException e) {
-                    throw new CMDIValidatorException(
-                            "error closing file '" + file + "'", e);
-                } finally {
-                    if ((report != null) && (handler != null)) {
-                        try {
-                            handler.onValidationReport(report);
-                        } finally {
-                            report = null;
-                        }
+                if ((report != null) && (handler != null)) {
+                    try {
+                        handler.onValidationReport(report);
+                    } finally {
+                        report = null;
                     }
                 }
             }

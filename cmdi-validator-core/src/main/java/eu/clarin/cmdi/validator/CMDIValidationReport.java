@@ -82,6 +82,9 @@ public interface CMDIValidationReport {
     public File getFile();
 
 
+    public boolean isFileSkipped();
+
+
     public boolean isSuccess();
 
 
