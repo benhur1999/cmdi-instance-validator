@@ -383,7 +383,7 @@ public class CMDIValidatorTool {
                         bps = handler.getTotalBytes() / handler.getTimeElapsed();
                     }
 
-                    logger.info("time elapsed: {}, validation result: {}% failure rate (files: {} total, {} passed, {} failed; {} skipped, {} total, {} files/second, {}/second)",
+                    logger.info("time elapsed: {}, validation result: {}% failure rate (files: {} total, {} passed, {} failed, {} skipped; {} total, {} files/second, {}/second)",
                             Humanize.duration(handler.getTimeElapsed(), LOCALE),
                             String.format(LOCALE, "%.2f", handler.getFailureRate() * 100f),
                             handler.getTotalFileCount(),
