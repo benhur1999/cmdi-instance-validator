@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2014 by
+ * This software is copyright (c) 2014-2019 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -92,6 +92,7 @@ public final class CMDISchemaLoader {
                 connectTimeout, socketTimeout);
     }
 
+
     public CMDISchemaLoader(File cacheDirectory, long maxCacheAge) {
         this(cacheDirectory, maxCacheAge, TimeUnit.HOURS.toMillis(1), 60000, 60000);
     }
@@ -114,7 +115,7 @@ public final class CMDISchemaLoader {
         logger.trace("loading schema: targetNamespace={}, location={}",
                 targetNamespace, schemaLocation);
         InputStream stream = null;
-        if (XMLConstants.XML_NS_URI.equalsIgnoreCase(targetNamespace)) {
+        if (XMLConstants.XML_NS_URI.equals(targetNamespace)) {
             stream = this.getClass().getResourceAsStream(XML_XSD_RESSOURCE);
             if (stream != null) {
                 logger.trace("using bundled schema for '{}'", schemaLocation);

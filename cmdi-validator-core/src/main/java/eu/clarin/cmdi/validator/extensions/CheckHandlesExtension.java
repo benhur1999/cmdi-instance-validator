@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2014 by
+ * This software is copyright (c) 2014-2019 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -223,4 +223,4 @@ public class CheckHandlesExtension extends CMDIValidatorExtension {
         }
     }
 
-} // CheckHandleExtension
+} // class CheckHandlesExtension

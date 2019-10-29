@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2014 by
+ * This software is copyright (c) 2014-2019 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -56,6 +56,7 @@ import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
 import net.sf.saxon.s9api.XsltTransformer;
+import net.sf.saxon.trans.UncheckedXPathException;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.xerces.impl.xs.XMLSchemaLoader;
@@ -124,6 +125,7 @@ public final class CMDIValidator {
     private final XQueryExecutable analyzeSchematronReport;
     private final List<CMDIValidatorExtension> extensions;
     private final FileEnumerator files;
+    private final long maxFileSize;
     private final CMDIValidationHandler handler;
     private final Map<Thread, ThreadContext> contexts =
             new ConcurrentHashMap<Thread, ThreadContext>();
@@ -137,8 +139,9 @@ public final class CMDIValidator {
         this(config, config.getRoot(), config.getHandler());
     }
 
-    public CMDIValidator(final CMDIValidatorConfig config, final File src, CMDIValidationHandler handler)
-            throws CMDIValidatorInitException {
+
+    public CMDIValidator(final CMDIValidatorConfig config, final File src,
+            CMDIValidationHandler handler) throws CMDIValidatorInitException {
         if (config == null) {
             throw new NullPointerException("config == null");
         }
@@ -195,9 +198,6 @@ public final class CMDIValidator {
                 stream = getClass().getResourceAsStream(ANALYZE_SVRL);
                 final XQueryCompiler compiler = processor.newXQueryCompiler();
                 this.analyzeSchematronReport  = compiler.compile(stream);
-            } catch (IOException e) {
-                throw new CMDIValidatorInitException(
-                        "error initializing schematron validator", e);
             } catch (SaxonApiException e) {
                 throw new CMDIValidatorInitException(
                         "error initializing schematron validator", e);
@@ -236,6 +236,7 @@ public final class CMDIValidator {
          */
         final TFile root = new TFile(src);
         this.files       = new FileEnumerator(root, config.getFileFilter());
+        this.maxFileSize = config.getMaxFileSize();
         if (config.getHandler() == null) {
             throw new NullPointerException("handler == null");
         }
@@ -614,60 +615,69 @@ public final class CMDIValidator {
 
 
         private void validate(final TFile file) throws CMDIValidatorException {
-            TFileInputStream stream = null;
             try {
-
-                /*
-                 * step 0: prepare
-                 */
-                logger.debug("validating file '{}' ({} bytes)",
-                        file, file.length());
                 report = new CMDIWriteableValidatonReportImpl();
-                report.setFile(file);
-                stream = new TFileInputStream(file);
 
-                /*
-                 * step 1: parse document and perform schema validation
-                 */
-                final XdmNode document = parseInstance(stream);
+                if ((maxFileSize > 0) && (file.length() > maxFileSize)) {
+                    logger.debug("skipping file '{}' ({} bytes)",
+                            file, file.length());
+                    report.setFile(file, true);
+                } else {
+                    TFileInputStream stream = null;
+                    try {
+                        logger.debug("validating file '{}' ({} bytes)", file,
+                                file.length());
+                        report.setFile(file, false);
 
-                if (document != null) {
-                    /*
-                     * step 2: perform Schematron validation
-                     */
-                    if (schematronValidator != null) {
-                        validateSchematron(document);
-                    }
+                        /*
+                         * step 0: prepare
+                         */
+                        stream = new TFileInputStream(file);
 
-                    /*
-                     * step 3: run extensions, if any
-                     */
-                    if (extensions != null) {
-                        for (CMDIValidatorExtension extension : extensions) {
-                            extension.validate(document, report);
+                        /*
+                         * step 1: parse document and perform schema validation
+                         */
+                        final XdmNode document = parseInstance(stream);
+
+                        if (document != null) {
+                            /*
+                             * step 2: perform Schematron validation
+                             */
+                            if (schematronValidator != null) {
+                                validateSchematron(document);
+                            }
+
+                            /*
+                             * step 3: run extensions, if any
+                             */
+                            if (extensions != null) {
+                                for (CMDIValidatorExtension extension : extensions) {
+                                    extension.validate(document, report);
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new CMDIValidatorException(
+                                "error reading file '" + file + "'", e);
+                    } catch (CMDIValidatorException e) {
+                        throw e;
+                    } finally {
+                        try {
+                            if (stream != null) {
+                                stream.close();
+                            }
+                        } catch (IOException e) {
+                            throw new CMDIValidatorException(
+                                    "error closing file '" + file + "'", e);
                         }
                     }
                 }
-            } catch (IOException e) {
-                throw new CMDIValidatorException(
-                        "error reading file '" + file + "'", e);
-            } catch (CMDIValidatorException e) {
-                throw e;
             } finally {
-                try {
-                    if (stream != null) {
-                        stream.close();
-                    }
-                } catch (IOException e) {
-                    throw new CMDIValidatorException(
-                            "error closing file '" + file + "'", e);
-                } finally {
-                    if ((report != null) && (handler != null)) {
-                        try {
-                            handler.onValidationReport(report);
-                        } finally {
-                            report = null;
-                        }
+                if ((report != null) && (handler != null)) {
+                    try {
+                        handler.onValidationReport(report);
+                    } finally {
+                        report = null;
                     }
                 }
             }
@@ -694,6 +704,9 @@ public final class CMDIValidator {
                     }
                 }
             } catch (SaxonApiException e) {
+                logger.trace("error parsing instance", e);
+                return null;
+            } catch (UncheckedXPathException e) {
                 logger.trace("error parsing instance", e);
                 return null;
             } catch (IOException e) {

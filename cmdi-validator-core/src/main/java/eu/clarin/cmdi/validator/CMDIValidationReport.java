@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2014 by
+ * This software is copyright (c) 2014-2019 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -62,6 +62,7 @@ public interface CMDIValidationReport {
         public abstract int priority();
     } // enum Severity
 
+
     public interface Message {
         public Severity getSeverity();
 
@@ -80,6 +81,9 @@ public interface CMDIValidationReport {
 
 
     public File getFile();
+
+
+    public boolean isFileSkipped();
 
 
     public boolean isSuccess();
@@ -111,4 +115,4 @@ public interface CMDIValidationReport {
 
     public int getMessageCount(Severity severity);
 
-} // CMDIValidatorResult
+} // interface CMDIValidationReport

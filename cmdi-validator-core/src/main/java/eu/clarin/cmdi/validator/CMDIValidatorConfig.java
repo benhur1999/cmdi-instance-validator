@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2014 by
+ * This software is copyright (c) 2014-2019 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -27,6 +27,7 @@ public class CMDIValidatorConfig {
     private final File root;
     private final CMDIValidationHandler handler;
     private FileFilter fileFilter = null;
+    private long maxFileSize = 0;
     private File schemaCacheDirectory = null;
     private CMDISchemaLoader schemaLoader = null;
     private File schematronSchemaFile = null;
@@ -56,6 +57,11 @@ public class CMDIValidatorConfig {
 
     public FileFilter getFileFilter() {
         return fileFilter;
+    }
+
+
+    public long getMaxFileSize() {
+        return maxFileSize;
     }
 
 
@@ -96,11 +102,13 @@ public class CMDIValidatorConfig {
     public int getConnectTimeout() {
         return connectTimeout;
     }
-    
+
+
     public int getSocketTimeout() {
         return socketTimeout;
     }
-    
+
+
     public static class Builder {
         private final CMDIValidatorConfig config;
 
@@ -118,6 +126,15 @@ public class CMDIValidatorConfig {
 
         public Builder fileFilter(final FileFilter fileFilter) {
             config.fileFilter = fileFilter;
+            return this;
+        }
+
+
+        public Builder maxFileSize(final long maxFileSize) {
+            if (maxFileSize < 0) {
+                throw new IllegalArgumentException("maxFileSize needs to be larger or equal to zero");
+            }
+            config.maxFileSize = maxFileSize;
             return this;
         }
 
@@ -180,15 +197,18 @@ public class CMDIValidatorConfig {
             return this;
         }
 
+
         public Builder connectTimeout(int connectTimeout) {
             config.connectTimeout = connectTimeout;
             return this;
         }
 
+
         public Builder socketTimeout(int socketTimeout) {
             config.socketTimeout = socketTimeout;
             return this;
         }
+
 
         public CMDIValidatorConfig build() {
             return config;
@@ -196,4 +216,4 @@ public class CMDIValidatorConfig {
 
     } // class Builder
 
-} // CMDIValidatorFactoryConfig
+} // class CMDIValidatorFactoryConfig

@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2014 by
+ * This software is copyright (c) 2014-2019 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -15,7 +15,6 @@
  *  GNU General Public License v3
  */
 package eu.clarin.cmdi.validator;
-
 
 public final class Version {
 

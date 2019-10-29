@@ -1,5 +1,5 @@
 /**
- * This software is copyright (c) 2014 by
+ * This software is copyright (c) 2014-2019 by
  *  - Institut fuer Deutsche Sprache (http://www.ids-mannheim.de)
  * This is free software. You can redistribute it
  * and/or modify it under the terms described in
@@ -20,8 +20,9 @@ import java.io.File;
 
 public interface CMDIWriteableValidationReport extends CMDIValidationReport {
 
-    public void setFile(File file);
-    
+    public void setFile(File file, boolean fileSkipped);
+
+
     public void reportInfo(int line, int col, String message);
 
 
@@ -31,7 +32,8 @@ public interface CMDIWriteableValidationReport extends CMDIValidationReport {
     public void reportWarning(int line, int col, String message);
 
 
-    public void reportWarning(int line, int col, String message, Throwable cause);
+    public void reportWarning(int line, int col, String message,
+            Throwable cause);
 
 
     public void reportError(int line, int col, String message);
