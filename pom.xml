@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -13,14 +14,14 @@
         <name>CLARIN EU</name>
         <url>http://www.clarin.eu</url>
     </organization>
-	<licenses>
-		<license>
-    		<name>GNU GENERAL PUBLIC LICENSE, Version 3</name>
-			<url>http://www.gnu.org/licenses/gpl-3.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-    
+    <licenses>
+        <license>
+            <name>GNU GENERAL PUBLIC LICENSE, Version 3</name>
+            <url>http://www.gnu.org/licenses/gpl-3.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <modules>
         <module>cmdi-validator-core</module>
         <module>cmdi-validator-tool</module>
@@ -52,9 +53,9 @@
             </dependency>
 
             <dependency>
-            	<groupId>org.slf4j</groupId>
-            	<artifactId>jcl-over-slf4j</artifactId>
-            	<version>${slf4j.version}</version>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -87,14 +88,14 @@
         </pluginManagement>
     </build>
 
-<distributionManagement>
+    <distributionManagement>
         <snapshotRepository>
-                <id>CLARIN-Snapshot</id>
-                <url>https://nexus.clarin.eu/content/repositories/clarin-snapshot</url>
+            <id>CLARIN-Snapshot</id>
+            <url>https://nexus.clarin.eu/content/repositories/clarin-snapshot</url>
         </snapshotRepository>
         <repository>
-                <id>CLARIN</id>
-                <url>https://nexus.clarin.eu/content/repositories/Clarin</url>
+            <id>CLARIN</id>
+            <url>https://nexus.clarin.eu/content/repositories/Clarin</url>
         </repository>
-</distributionManagement>
+    </distributionManagement>
 </project>
