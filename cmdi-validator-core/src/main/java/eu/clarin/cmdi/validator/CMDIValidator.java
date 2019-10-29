@@ -56,6 +56,7 @@ import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
 import net.sf.saxon.s9api.XsltTransformer;
+import net.sf.saxon.trans.UncheckedXPathException;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.xerces.impl.xs.XMLSchemaLoader;
@@ -195,9 +196,6 @@ public final class CMDIValidator {
                 stream = getClass().getResourceAsStream(ANALYZE_SVRL);
                 final XQueryCompiler compiler = processor.newXQueryCompiler();
                 this.analyzeSchematronReport  = compiler.compile(stream);
-            } catch (IOException e) {
-                throw new CMDIValidatorInitException(
-                        "error initializing schematron validator", e);
             } catch (SaxonApiException e) {
                 throw new CMDIValidatorInitException(
                         "error initializing schematron validator", e);
@@ -694,6 +692,9 @@ public final class CMDIValidator {
                     }
                 }
             } catch (SaxonApiException e) {
+                logger.trace("error parsing instance", e);
+                return null;
+            } catch (UncheckedXPathException e) {
                 logger.trace("error parsing instance", e);
                 return null;
             } catch (IOException e) {
