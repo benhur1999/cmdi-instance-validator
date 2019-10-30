@@ -31,6 +31,7 @@ public final class CMDIValidatonReportBuilder {
     private List<Message> messages;
     private Severity highestSeverity = Severity.INFO;
 
+
     CMDIValidatonReportBuilder(File file) {
         this.file = file;
     }

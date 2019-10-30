@@ -64,6 +64,7 @@ public final class CMDIValidationReport {
         return Result.ERROR.equals(result);
     }
 
+
     public boolean isSkipped() {
         return Result.SKIPPED.equals(result);
     }
