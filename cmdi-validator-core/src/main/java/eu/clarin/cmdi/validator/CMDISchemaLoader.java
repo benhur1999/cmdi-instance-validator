@@ -325,6 +325,7 @@ public final class CMDISchemaLoader {
                 new PoolingHttpClientConnectionManager();
         manager.setDefaultMaxPerRoute(8);
         manager.setMaxTotal(128);
+        manager.setValidateAfterInactivity(-1);
 
         final SocketConfig socketConfig = SocketConfig.custom()
                 .setSoReuseAddress(true)
@@ -340,7 +341,6 @@ public final class CMDISchemaLoader {
                 .setConnectTimeout(connectTimeout)
                 .setSocketTimeout(socketTimeout)
                 .setConnectionRequestTimeout(0) /* infinite */
-                .setStaleConnectionCheckEnabled(true)
                 .build();
 
         final ConnectionKeepAliveStrategy keepAliveStrategy =

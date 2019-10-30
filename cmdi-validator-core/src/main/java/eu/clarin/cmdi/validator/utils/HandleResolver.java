@@ -303,6 +303,7 @@ public class HandleResolver {
                 new PoolingHttpClientConnectionManager();
         manager.setDefaultMaxPerRoute(8);
         manager.setMaxTotal(128);
+        manager.setValidateAfterInactivity(-1);
 
         final SocketConfig socketConfig = SocketConfig.custom()
                 .setSoReuseAddress(true)
@@ -322,7 +323,6 @@ public class HandleResolver {
                 .setConnectTimeout(connectTimeout)
                 .setSocketTimeout(socketTimeout)
                 .setConnectionRequestTimeout(0) /* infinite */
-                .setStaleConnectionCheckEnabled(false)
                 .build();
 
         final ConnectionKeepAliveStrategy keepAliveStrategy =
