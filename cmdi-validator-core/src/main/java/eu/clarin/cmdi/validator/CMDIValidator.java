@@ -468,7 +468,7 @@ public final class CMDIValidator {
         private final SAXParser parser;
         private final XsltTransformer schematronValidator;
         private final DocumentBuilder builder;
-        private CMDIWriteableValidationReport report;
+        private CMDIValidatonReportBuilder reportBuilder;
 
 
         private ThreadContext() {
@@ -616,18 +616,17 @@ public final class CMDIValidator {
 
         private void validate(final TFile file) throws CMDIValidatorException {
             try {
-                report = new CMDIWriteableValidatonReportImpl();
+                reportBuilder = new CMDIValidatonReportBuilder(file);
 
                 if ((maxFileSize > 0) && (file.length() > maxFileSize)) {
                     logger.debug("skipping file '{}' ({} bytes)",
                             file, file.length());
-                    report.setFile(file, true);
                 } else {
                     TFileInputStream stream = null;
                     try {
                         logger.debug("validating file '{}' ({} bytes)", file,
                                 file.length());
-                        report.setFile(file, false);
+                        reportBuilder.processing();
 
                         /*
                          * step 0: prepare
@@ -652,7 +651,7 @@ public final class CMDIValidator {
                              */
                             if (extensions != null) {
                                 for (CMDIValidatorExtension extension : extensions) {
-                                    extension.validate(document, report);
+                                    extension.validate(document, reportBuilder);
                                 }
                             }
                         }
@@ -673,11 +672,11 @@ public final class CMDIValidator {
                     }
                 }
             } finally {
-                if ((report != null) && (handler != null)) {
+                if ((reportBuilder != null) && (handler != null)) {
                     try {
-                        handler.onValidationReport(report);
+                        handler.onValidationReport(reportBuilder.build());
                     } finally {
-                        report = null;
+                        reportBuilder = null;
                     }
                 }
             }
@@ -756,11 +755,11 @@ public final class CMDIValidator {
                             column = LocationUtils.getColumnNumber(n);
                         }
                         if ("I".equals(s)) {
-                            report.reportInfo(line, column, m);
+                            reportBuilder.reportInfo(line, column, m);
                         } else if ("W".equals(s)) {
-                            report.reportWarning(line, column, m);
+                            reportBuilder.reportWarning(line, column, m);
                         } else {
-                            report.reportError(line, column, m);
+                            reportBuilder.reportError(line, column, m);
                         }
                     } // for
                     if (xpathCompiler != null) {
@@ -789,8 +788,8 @@ public final class CMDIValidator {
         private void reportWarning(int line, int col, String message,
                 Throwable cause) {
             logger.debug("reporting warning: [{}:{}]: {}", line, col, message);
-            if (report != null) {
-                report.reportWarning(line, col, message, cause);
+            if (reportBuilder != null) {
+                reportBuilder.reportWarning(line, col, message, cause);
             }
         }
 
@@ -798,8 +797,8 @@ public final class CMDIValidator {
         private void reportError(int line, int col, String message,
                 Throwable cause) {
             logger.debug("reporting error: [{}:{}]: {}", line, col, message);
-            if (report != null) {
-                report.reportError(line, col, message, cause);
+            if (reportBuilder != null) {
+                reportBuilder.reportError(line, col, message, cause);
             }
         }
     }

@@ -17,10 +17,115 @@
 package eu.clarin.cmdi.validator;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 
-public interface CMDIValidationReport {
+public final class CMDIValidationReport {
+    private final File file;
+    private final Result result;
+    private final List<Message> messages;
+
+    
+    CMDIValidationReport(File file,
+            Result result,
+            List<Message> messages) {
+        this.file = file;
+        this.result  = result;
+        if ((messages != null) && !messages.isEmpty()) {
+            this.messages = Collections.unmodifiableList(messages);
+        } else {
+            this.messages = null;
+        }
+    }
+
+
+    public File getFile() {
+        return file;
+    }
+
+
+    public Result getResult() {
+        return result;
+    }
+
+
+    public boolean isSuccess() {
+        return Result.SUCCESS.equals(result);
+    }
+
+
+    public boolean isWarning() {
+        return Result.WARNING.equals(result);
+    }
+
+
+    public boolean isError() {
+        return Result.ERROR.equals(result);
+    }
+
+    public boolean isSkipped() {
+        return Result.SKIPPED.equals(result);
+    }
+
+
+    public List<Message> getMessages() {
+        if (messages != null) {
+          return messages;  
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+
+    public Message getFirstMessage() {
+        return (messages != null) ? messages.get(0) : null;
+    }
+
+
+    public Message getFirstMessage(Severity severity) {
+        if (severity == null) {
+            throw new NullPointerException("severity == null");
+        }
+
+        if (messages != null) {
+            for (CMDIValidationReport.Message msg : messages) {
+                if (severity.equals(msg.getSeverity())) {
+                    return msg;
+                }
+            }
+        }
+        return null;
+    }
+
+
+    public int getMessageCount() {
+        return (messages != null) ? messages.size() : 0;
+    }
+
+
+    public int getMessageCount(Severity severity) {
+        if (severity == null) {
+            throw new NullPointerException("severity == null");
+        }
+
+        int count = 0;
+        if (messages != null) {
+            for (Message msg : messages) {
+                if (severity.equals(msg.getSeverity())) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+
+    public enum Result {
+        SUCCESS, WARNING, ERROR, SKIPPED
+    } // enum Result
+
+
     public enum Severity {
         INFO {
             @Override
@@ -61,58 +166,49 @@ public interface CMDIValidationReport {
 
         public abstract int priority();
     } // enum Severity
+    
+
+    public static final class Message {
+        private final Severity severity;
+        private final int line;
+        private final int col;
+        private final String message;
+        private final Throwable cause;
 
 
-    public interface Message {
-        public Severity getSeverity();
+        Message(Severity severity, int line, int col, String message,
+                Throwable cause) {
+            this.severity = severity;
+            this.line = line;
+            this.col = col;
+            this.message = message;
+            this.cause = cause;
+        }
 
 
-        public int getLineNumber();
+        public Severity getSeverity() {
+            return severity;
+        }
 
 
-        public int getColumnNumber();
+        public int getLineNumber() {
+            return line;
+        }
 
 
-        public String getMessage();
+        public int getColumnNumber() {
+            return col;
+        }
 
 
-        public Throwable getCause();
-    } // interface Message
+        public String getMessage() {
+            return message;
+        }
 
 
-    public File getFile();
+        public Throwable getCause() {
+            return cause;
+        }
+    } // inner class Message
 
-
-    public boolean isFileSkipped();
-
-
-    public boolean isSuccess();
-
-
-    public boolean isWarning();
-
-
-    public boolean isFailed();
-
-
-    public Severity getHighestSeverity();
-
-
-    public boolean isHighestSeverity(Severity severity);
-
-
-    public List<Message> getMessages();
-
-
-    public Message getFirstMessage();
-
-
-    public Message getFirstMessage(Severity severity);
-
-
-    public int getMessageCount();
-
-
-    public int getMessageCount(Severity severity);
-
-} // interface CMDIValidationReport
+} // class CMDIValidationReport

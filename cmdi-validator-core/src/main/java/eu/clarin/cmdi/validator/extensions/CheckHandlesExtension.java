@@ -27,10 +27,10 @@ import net.sf.saxon.s9api.XPathExecutable;
 import net.sf.saxon.s9api.XPathSelector;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmNode;
+import eu.clarin.cmdi.validator.CMDIValidatonReportBuilder;
 import eu.clarin.cmdi.validator.CMDIValidatorException;
 import eu.clarin.cmdi.validator.CMDIValidatorExtension;
 import eu.clarin.cmdi.validator.CMDIValidatorInitException;
-import eu.clarin.cmdi.validator.CMDIWriteableValidationReport;
 import eu.clarin.cmdi.validator.utils.HandleResolver;
 import eu.clarin.cmdi.validator.utils.LocationUtils;
 
@@ -79,7 +79,7 @@ public class CheckHandlesExtension extends CMDIValidatorExtension {
 
     @Override
     public void validate(final XdmNode document,
-            final CMDIWriteableValidationReport report)
+            final CMDIValidatonReportBuilder reportBuilder)
             throws CMDIValidatorException {
         try {
             XPathSelector selector = xpath.load();
@@ -95,7 +95,7 @@ public class CheckHandlesExtension extends CMDIValidatorExtension {
                         handle = null;
                     } else {
                         if (!handle.equals(h)) {
-                            report.reportWarning(line, column, "handle '" + h +
+                            reportBuilder.reportWarning(line, column, "handle '" + h +
                                     "' contains leading or tailing spaces " +
                                     "within <ResourceRef> element");
                         }
@@ -103,9 +103,9 @@ public class CheckHandlesExtension extends CMDIValidatorExtension {
                 }
 
                 if (handle != null) {
-                    checkHandleURISyntax(report, handle, line, column);
+                    checkHandleURISyntax(reportBuilder, handle, line, column);
                 } else {
-                    report.reportError(line, column,
+                    reportBuilder.reportError(line, column,
                             "invalid handle (<ResourceRef> was empty)");
                 }
             }
@@ -115,9 +115,9 @@ public class CheckHandlesExtension extends CMDIValidatorExtension {
     }
 
 
-    private void checkHandleURISyntax(
-            final CMDIWriteableValidationReport report, final String handle,
-            final int line, final int column) throws CMDIValidatorException {
+    private void checkHandleURISyntax(CMDIValidatonReportBuilder reportBuilder,
+            final String handle, final int line, final int column)
+                    throws CMDIValidatorException {
         try {
             final URI uri = new URI(handle);
             if (HDL_SCHEME.equalsIgnoreCase(uri.getScheme())) {
@@ -128,7 +128,7 @@ public class CheckHandlesExtension extends CMDIValidatorExtension {
                 try {
                     final URI actionableURI =
                             new URI(HDL_PROXY_HTTP, HDL_PROXY_HOST, path, null);
-                    checkHandleResolves(report, actionableURI, line, column);
+                    checkHandleResolves(reportBuilder, actionableURI, line, column);
                 } catch (URISyntaxException e) {
                     /* should not happen */
                     throw new CMDIValidatorException(
@@ -136,46 +136,46 @@ public class CheckHandlesExtension extends CMDIValidatorExtension {
                 }
             } else if (URN_SCHEME.equals(uri.getScheme())) {
                 if (resolveHandles) {
-                    report.reportInfo(line, column, "PID '" + handle +
+                    reportBuilder.reportInfo(line, column, "PID '" + handle +
                             "' skipped, because URN resolving is not supported");
                 } else {
-                    report.reportInfo(line, column, "PID '" + handle +
+                    reportBuilder.reportInfo(line, column, "PID '" + handle +
                             "' skipped, because URN sytax checking is not supported");
                 }
             } else if (HDL_PROXY_HTTP.equalsIgnoreCase(uri.getScheme()) ||
                     HDL_PROXY_HTTPS.equalsIgnoreCase(uri.getScheme())) {
                 if (uri.getHost() != null) {
                     if (!HDL_PROXY_HOST.equalsIgnoreCase(uri.getHost())) {
-                        report.reportError(line, column,
+                        reportBuilder.reportError(line, column,
                                 "The URI of PID '" + handle +
                                 "' contains an unexpected host part of '" +
                                 uri.getHost() + "'");
                     }
-                    checkHandleResolves(report, uri, line, column);
+                    checkHandleResolves(reportBuilder, uri, line, column);
                 } else {
-                    report.reportError(line, column, "The URI of PID '" +
+                    reportBuilder.reportError(line, column, "The URI of PID '" +
                             handle + "' is missing the host part");
                 }
             } else {
                 if (uri.getScheme() != null) {
-                    report.reportError(line, column,
+                    reportBuilder.reportError(line, column,
                             "The URI of PID '" + handle +
                             "' contains an unexpected schema part of '" +
                             uri.getScheme() + "'");
                 } else {
-                    report.reportError(line, column, "The URI of PID '" +
+                    reportBuilder.reportError(line, column, "The URI of PID '" +
                             handle + "' is missing a proper schema part");
                 }
             }
         } catch (URISyntaxException e) {
-            report.reportError(line, column, "PID '" + handle +
+            reportBuilder.reportError(line, column, "PID '" + handle +
                     "' is not a well-formed URI: " + e.getMessage());
         }
     }
 
 
     private void checkHandleResolves(
-            final CMDIWriteableValidationReport result, final URI uri,
+            final CMDIValidatonReportBuilder result, final URI uri,
             final int line, final int column) throws CMDIValidatorException {
         if (resolver != null) {
             try {

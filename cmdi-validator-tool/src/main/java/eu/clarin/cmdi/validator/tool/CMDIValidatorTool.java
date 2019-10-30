@@ -683,7 +683,7 @@ public class CMDIValidatorTool {
                 throws CMDIValidatorException {
 
             final File file = report.getFile();
-            if (report.isFileSkipped()) {
+            if (report.isSkipped()) {
                 filesSkipped.incrementAndGet();
                 if (verbose) {
                     logger.info("file '{}' was skipped", file);
@@ -694,8 +694,8 @@ public class CMDIValidatorTool {
                     totalBytes.getAndAdd(file.length());
                 }
 
-                switch (report.getHighestSeverity()) {
-                case INFO:
+                switch (report.getResult()) {
+                case SUCCESS:
                     logger.debug("file '{}' is valid", file);
                     break;
                 case WARNING:
@@ -760,8 +760,8 @@ public class CMDIValidatorTool {
                     }
                     break;
                 default:
-                    throw new CMDIValidatorException("unexpected severity: " +
-                            report.getHighestSeverity());
+                    /* IGNORE */
+                    break;
                 } // switch
             }
         }

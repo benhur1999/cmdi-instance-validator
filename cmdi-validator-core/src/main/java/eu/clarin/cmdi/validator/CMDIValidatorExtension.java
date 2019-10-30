@@ -35,7 +35,7 @@ public abstract class CMDIValidatorExtension {
 
 
     public abstract void validate(final XdmNode document,
-            final CMDIWriteableValidationReport report)
+            final CMDIValidatonReportBuilder reportBuilder)
             throws CMDIValidatorException;
 
 
