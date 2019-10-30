@@ -26,19 +26,34 @@ import eu.clarin.cmdi.validator.CMDIValidationReport.Result;
 
 
 public final class CMDIValidatonReportBuilder {
-    private final File file;
-    private boolean processing;
-    private List<Message> messages;
+    private static final int DEFAULT_MESSAGE_SIZE = 16;
+    private static final int MAX_MESSAGE_SIZE = 64;
+    private File file;
+    private boolean fileSkipped;
+    private List<Message> messages =
+            new ArrayList<Message>(DEFAULT_MESSAGE_SIZE);
     private Severity highestSeverity = Severity.INFO;
 
 
-    CMDIValidatonReportBuilder(File file) {
+    public void reset() {
+        file = null;
+        fileSkipped = false;
+        if (messages.size() > MAX_MESSAGE_SIZE) {
+            messages = new ArrayList<Message>(DEFAULT_MESSAGE_SIZE);
+        } else {
+            messages.clear();
+        }
+        highestSeverity = Severity.INFO;
+    }
+
+
+    public void setFile(File file) {
         this.file = file;
     }
 
 
-    public void processing() {
-        this.processing = true;
+    public void setFileSkipped() {
+        this.fileSkipped = true;
     }
 
 
@@ -80,9 +95,6 @@ public final class CMDIValidatonReportBuilder {
             final int col,
             final String message,
             final Throwable cause) {
-        if (messages == null) {
-            messages = new ArrayList<Message>(8);
-        }
         if (severity.priority() > highestSeverity.priority()) {
             highestSeverity = severity;
         }
@@ -91,8 +103,10 @@ public final class CMDIValidatonReportBuilder {
 
 
     public CMDIValidationReport build() {
-        Result result = Result.SKIPPED;
-        if (processing) {
+        Result result;
+        if (fileSkipped) {
+            result = Result.SKIPPED;
+        } else {
             switch (highestSeverity) {
             case INFO:
                 result = Result.SUCCESS;
@@ -104,10 +118,12 @@ public final class CMDIValidatonReportBuilder {
                 result = Result.ERROR;
                 break;
             default:
-                break;
+                /* NOT-REACH */
+                throw new InternalError("cannot happen");
             }
         }
-        return new CMDIValidationReport(file, result, messages);
+        return new CMDIValidationReport(file, result,
+                new ArrayList<Message>(messages));
     }
 
 } // class CMDIValidatonReportBuilder
