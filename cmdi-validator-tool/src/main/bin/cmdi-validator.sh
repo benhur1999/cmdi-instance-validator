@@ -1,6 +1,9 @@
 #!/bin/sh
 
 VM_OPTS=""
+if [ -n "${CMDI_VALIDATOR_VM_OPTS}" ]; then
+    VM_OPTS="${VM_OPTS} ${CMDI_VALIDATOR_VM_OPTS}"
+fi
 
 #script depends on GNU readlink, which is different from BSD readlink...
 READLINK=$(command -v greadlink)
