@@ -62,7 +62,6 @@ final class FileEnumerator {
         while (!queue.isEmpty()) {
             TFile entry = queue.removeFirst();
             if (entry.isDirectory()) {
-                System.err.println("-> " + entry);
                 addEntries(entry);
             } else {
                 result = entry;
@@ -86,7 +85,6 @@ final class FileEnumerator {
                             continue;
                         }
                     }
-                    System.err.println("ADD: " + tmp);
                     queue.addFirst(tmp);
                 }
             }
