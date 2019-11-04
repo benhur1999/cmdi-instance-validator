@@ -25,13 +25,14 @@ public class CMDIValidationHandlerAdapter implements CMDIValidationHandler {
 
 
     @Override
-    public void onJobFinished(final CMDIValidator.Result result)
+    public void onJobFinished(CMDIValidator.Result result,
+            CMDIValidator.Statistics statistics)
             throws CMDIValidatorException {
     }
 
 
     @Override
-    public void onValidationReport(final CMDIValidationReport report)
+    public void onValidationReport(CMDIValidationReport report)
             throws CMDIValidatorException {
     }
 

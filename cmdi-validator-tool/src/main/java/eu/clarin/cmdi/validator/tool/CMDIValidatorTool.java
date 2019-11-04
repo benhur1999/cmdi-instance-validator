@@ -16,17 +16,13 @@
  */
 package eu.clarin.cmdi.validator.tool;
 
-import humanize.Humanize;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.PrintWriter;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -342,33 +338,23 @@ public class CMDIValidatorTool {
                                 /* IGNORE */
                             }
                             if ((progressInterval > 0) && logger.isInfoEnabled()) {
-                                final long now = System.currentTimeMillis();
-                                int fps    = -1;
-                                long bps   = -1;
-                                int count  = 0;
-                                long delta = -1;
-                                synchronized (handler) {
-                                    delta = (now - handler.getTimeStarted()) / 1000;
-                                    if (delta > 0) {
-                                        fps = (int) (handler.getTotalFileCount() / delta);
-                                        bps = (handler.getTotalBytes() / delta);
-                                    }
-                                    count = handler.getTotalFileCount();
-                                } // synchronized (result)
+                                final CMDIValidator.Statistics s = validator.getStatistics();
+                                int fps = s.getFilesProcessedPerSecond();
+                                long bps = s.getBytesProcessedPerSecond();
                                 if (totalFileCount > 0) {
-                                    float complete = (count / (float)  totalFileCount) * 100f;
+                                    float complete = (s.getTotalFilesCount() / (float)  totalFileCount) * 100f;
                                     logger.info("processed {} files ({}%) in {} ({} files/second, {}/second) ...",
-                                            count,
+                                            s.getTotalFilesCount(),
                                             String.format(LOCALE, "%.2f", complete),
-                                            Humanize.duration(delta, LOCALE),
+                                            formatDuration(s.getElapsedTime()),
                                             ((fps != -1) ? fps : "N/A"),
-                                            ((bps != -1) ? Humanize.binaryPrefix(bps, LOCALE) : "N/A MB"));
+                                            ((bps != -1) ? humananizeBytes(bps) : "N/A MB"));
                                 } else {
                                     logger.info("processed {} files in {} ({} files/second, {}/second) ...",
-                                            count,
-                                            Humanize.duration(delta, LOCALE),
+                                            s.getTotalFilesCount(),
+                                            formatDuration(s.getElapsedTime()),
                                             ((fps != -1) ? fps : "N/A"),
-                                            ((bps != -1) ? Humanize.binaryPrefix(bps, LOCALE) : "N/A MB"));
+                                            ((bps != -1) ? humananizeBytes(bps) : "N/A MB"));
                                 }
                                 if (logger.isDebugEnabled()) {
                                     if ((checkHandleExtension != null) &&
@@ -389,23 +375,20 @@ public class CMDIValidatorTool {
                         validator.shutdown();
                     }
 
-                    int fps = -1;
-                    long bps = -1;
-                    if (handler.getTimeElapsed() > 0) {
-                        fps = (int) (handler.getTotalFileCount() / handler.getTimeElapsed());
-                        bps = handler.getTotalBytes() / handler.getTimeElapsed();
-                    }
+                    CMDIValidator.Statistics s = handler.finalStats;
+                    int fps = s.getFilesProcessedPerSecond();
+                    long bps = s.getBytesProcessedPerSecond();
 
                     logger.info("time elapsed: {}, validation result: {}% failure rate (files: {} total, {} passed, {} failed, {} skipped; {} total, {} files/second, {}/second)",
-                            Humanize.duration(handler.getTimeElapsed(), LOCALE),
-                            String.format(LOCALE, "%.2f", handler.getFailureRate() * 100f),
-                            handler.getTotalFileCount(),
-                            handler.getValidFileCount(),
-                            handler.getInvalidFileCount(),
-                            handler.getSkippedFileCount(),
-                            Humanize.binaryPrefix(handler.getTotalBytes(), LOCALE),
+                            formatDuration(s.getElapsedTime()),
+                            String.format(LOCALE, "%.2f", s.getFailureRate() * 100f),
+                            s.getTotalFilesCount(),
+                            s.getValidFilesCount(),
+                            s.getFilesInvalidCount(),
+                            s.getSkippedFilesCount(),
+                            humananizeBytes(s.getTotalBytesCount()),
                             ((fps != -1) ? fps : "N/A"),
-                            ((bps != -1) ? Humanize.binaryPrefix(bps, LOCALE) : "N/A MB"));
+                            ((bps != -1) ? humananizeBytes(bps) : "N/A MB"));
                     logger.debug("... done");
                 } else {
                     logger.error("not found: {}", archive);
@@ -490,7 +473,7 @@ public class CMDIValidatorTool {
                 .argName("SIZE")
                 .longOpt("max-file-size")
                 .desc(String.format("maximum file size to process (default: %s)",
-                        Humanize.binaryPrefix(DEFAULT_MAX_FILE_SIZE, LOCALE)))
+                        humananizeBytes(DEFAULT_MAX_FILE_SIZE)))
                 .build());
         g3.addOption(Option.builder(OPT_NO_MAX_FILESIZE)
                  .longOpt("process-all")
@@ -588,69 +571,41 @@ public class CMDIValidatorTool {
     }
 
 
+    private static final String formatDuration(Duration duration) {
+        final long seconds = duration.getSeconds();
+        return String.format("%d:%02d:%02d",
+                (seconds / 3600),
+                ((seconds % 3600) / 60),
+                (seconds % 60));
+    }
+
+    
+    private static final double LOG_1024 = Math.log(1024);
+
+
+    private static String humananizeBytes(long bytes) {
+        if (bytes < 1024) {
+            return bytes + " B";
+        } else {
+            int exp = (int) (Math.log(bytes) / LOG_1024);
+            char pre = "KMGTPE".charAt(exp - 1);
+            return String.format(LOCALE, "%.1f %sB",
+                    (bytes / Math.pow(1024, exp)), pre);
+        }
+    }    
+
+    
     private static class Handler extends CMDIValidationHandlerAdapter {
         private final boolean verbose;
         private final File reportFile;
-        private long started               = -1;
-        private long finished              = -1;
-        private AtomicInteger filesTotal   = new AtomicInteger();
-        private AtomicInteger filesSkipped = new AtomicInteger();
-        private AtomicInteger filesInvalid = new AtomicInteger();
-        private AtomicLong    totalBytes   = new AtomicLong();
         private boolean isCompleted = false;
         private final Object waiter = new Object();
         private CMDIValidationReportXMLWriter reportFileWriter;
-
+        private CMDIValidator.Statistics finalStats;
 
         private Handler(boolean verbose, File reportFile) {
             this.verbose = verbose;
             this.reportFile = reportFile;
-        }
-
-
-        public long getTimeStarted() {
-            return started;
-        }
-
-
-        public long getTimeElapsed() {
-            long duration = (finished != -1)
-                    ? (finished - started)
-                    : (System.currentTimeMillis() - started);
-            return TimeUnit.MILLISECONDS.toSeconds(duration);
-        }
-
-
-        public int getTotalFileCount() {
-            return filesTotal.get();
-        }
-
-
-        public int getSkippedFileCount() {
-            return filesSkipped.get();
-        }
-
-
-        public int getValidFileCount() {
-            return filesTotal.get() - filesInvalid.get();
-        }
-
-
-        public int getInvalidFileCount() {
-            return filesInvalid.get();
-        }
-
-
-        public float getFailureRate() {
-            final int total = filesTotal.get();
-            return (total > 0)
-                    ? ((float) filesInvalid.get() / (float) total)
-                    : 0.0f;
-        }
-
-
-        public long getTotalBytes() {
-            return totalBytes.get();
         }
 
 
@@ -672,8 +627,6 @@ public class CMDIValidatorTool {
         @Override
         public void onJobStarted() throws CMDIValidatorException {
             logger.debug("validation process started");
-            this.started = System.currentTimeMillis();
-        
             if (reportFile != null) {
                 this.reportFileWriter = new CMDIValidationReportXMLWriter(reportFile);    
             }
@@ -681,14 +634,13 @@ public class CMDIValidatorTool {
 
 
         @Override
-        public void onJobFinished(final CMDIValidator.Result result)
+        public void onJobFinished(final CMDIValidator.Result result,
+                final CMDIValidator.Statistics statistics)
                 throws CMDIValidatorException {
-
             if (reportFileWriter != null) {
                 reportFileWriter.close();
             }
-            
-            finished = System.currentTimeMillis();
+
             switch (result) {
             case OK:
                 logger.debug("validation process finished successfully");
@@ -702,7 +654,8 @@ public class CMDIValidatorTool {
             default:
                 logger.debug("unknown result: " + result);
             } // switch
-
+            finalStats = statistics;
+            
             synchronized (waiter) {
                 isCompleted = true;
                 waiter.notifyAll();
@@ -717,20 +670,13 @@ public class CMDIValidatorTool {
             if (reportFileWriter != null) {
                 reportFileWriter.writeReport(report);
             }
-            
-            filesTotal.incrementAndGet();
 
             final File file = report.getFile();
             if (report.isSkipped()) {
-                filesSkipped.incrementAndGet();
                 if (verbose) {
                     logger.info("file '{}' was skipped", file);
                 }
             } else {
-                if (file != null) {
-                    totalBytes.getAndAdd(file.length());
-                }
-
                 switch (report.getResult()) {
                 case VALID:
                     logger.debug("file '{}' is valid", file);
@@ -767,7 +713,6 @@ public class CMDIValidatorTool {
                     }
                     break;
                 case INVALID:
-                    filesInvalid.incrementAndGet();
                     if (verbose) {
                         logger.error("file '{}' is invalid:", file);
                         for (Message msg : report.getMessages()) {
