@@ -44,7 +44,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.clarin.cmdi.validator.CMDIValidator;
+import eu.clarin.cmdi.validator.CMDILegacyValidator;
 import eu.clarin.cmdi.validator.CMDIValidatorConfig;
 import eu.clarin.cmdi.validator.CMDIValidatorException;
 import eu.clarin.cmdi.validator.CMDIValidatorInitException;
@@ -240,7 +240,7 @@ public class CMDIValidatorTool {
 
             final org.apache.log4j.Logger log =
                     org.apache.log4j.Logger.getLogger(
-                            CMDIValidator.class.getPackage().getName());
+                            CMDILegacyValidator.class.getPackage().getName());
             if (debugging > 0) {
                 appender.setLayout(
                         new org.apache.log4j.PatternLayout("[%p] %t: %m%n"));
@@ -324,8 +324,8 @@ public class CMDIValidatorTool {
                             new ThreadedCMDIValidatorProcessor(threadCount);
                     try {
                         processor.start();
-                        final CMDIValidator validator =
-                                new CMDIValidator(builder.build());
+                        final CMDILegacyValidator validator =
+                                new CMDILegacyValidator(builder.build());
                         processor.process(validator);
                         
                         /*
@@ -680,7 +680,7 @@ public class CMDIValidatorTool {
 
 
         @Override
-        public void onJobFinished(final CMDIValidator.Result result)
+        public void onJobFinished(final CMDILegacyValidator.Result result)
                 throws CMDIValidatorException {
 
             if (reportFileWriter != null) {

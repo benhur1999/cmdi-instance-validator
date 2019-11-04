@@ -32,8 +32,8 @@ public class ThreadedCMDIValidatorProcessor implements CMDIValidatorProcessor {
     private static final Logger logger =
             LoggerFactory.getLogger(ThreadedCMDIValidatorProcessor.class);
     private final int threads;
-    private final List<CMDIValidator> validators =
-            new ArrayList<CMDIValidator>();
+    private final List<CMDILegacyValidator> validators =
+            new ArrayList<CMDILegacyValidator>();
     private int idx = 0;
     private boolean running = false;
     private ThreadGroup workers;
@@ -89,7 +89,7 @@ public class ThreadedCMDIValidatorProcessor implements CMDIValidatorProcessor {
 
 
     @Override
-    public void process(final CMDIValidator validator)
+    public void process(final CMDILegacyValidator validator)
             throws CMDIValidatorException {
         if (validator == null) {
             throw new NullPointerException("validator == null");
@@ -124,7 +124,7 @@ public class ThreadedCMDIValidatorProcessor implements CMDIValidatorProcessor {
 
                 // loop for work ...
                 boolean done = false;
-                CMDIValidator validator = null;
+                CMDILegacyValidator validator = null;
                 for (;;) {
                     if (Thread.currentThread().isInterrupted()) {
                         break;

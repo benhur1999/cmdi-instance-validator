@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.java.truevfs.access.TFile;
 
 
-public final class CMDIValidator {
+public final class CMDILegacyValidator {
     public enum Result {
         OK, ABORTED, ERROR
     }
@@ -40,13 +40,13 @@ public final class CMDIValidator {
     private Result result = null;
 
     
-    public CMDIValidator(final CMDIValidatorConfig config)
+    public CMDILegacyValidator(final CMDIValidatorConfig config)
             throws CMDIValidatorInitException {
         this(config, config.getRoot(), config.getHandler());
     }
 
 
-    public CMDIValidator(final CMDIValidatorConfig config, final File src,
+    public CMDILegacyValidator(final CMDIValidatorConfig config, final File src,
             CMDIValidationHandler handler) throws CMDIValidatorInitException {
         if (config == null) {
             throw new NullPointerException("config == null");
