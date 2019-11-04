@@ -46,6 +46,7 @@ import eu.clarin.cmdi.validator.CMDIValidatorConfig;
 import eu.clarin.cmdi.validator.CMDIValidatorException;
 import eu.clarin.cmdi.validator.CMDIValidatorInitException;
 import eu.clarin.cmdi.validator.LegacyCMDIThreadedValidator;
+import eu.clarin.cmdi.validator.ThreadedCMDIValidator;
 import eu.clarin.cmdi.validator.CMDIValidator;
 import eu.clarin.cmdi.validator.CMDIValidationHandlerAdapter;
 import eu.clarin.cmdi.validator.CMDIValidationReport;
@@ -77,6 +78,7 @@ public class CMDIValidatorTool {
     private static final String OPT_REPORT_FILE            = "R";
     private static final String OPT_CHECK_PIDS             = "p";
     private static final String OPT_CHECK_AND_RESOLVE_PIDS = "P";
+    private static final String OPT_USE_LEGACY             = "Xlegacy";
     private static final Logger logger =
             LoggerFactory.getLogger(CMDIValidatorTool.class);
     private static final org.apache.log4j.ConsoleAppender appender;
@@ -100,7 +102,8 @@ public class CMDIValidatorTool {
         File reportFile             = null;
         boolean checkPids           = false;
         boolean checkAndResolvePids = false;
-
+        boolean useLegacy           = false;
+        
         /*
          * setup command line parser
          */
@@ -230,6 +233,10 @@ public class CMDIValidatorTool {
                 checkAndResolvePids = true;
             }
 
+            if (line.hasOption(OPT_USE_LEGACY)) {
+                useLegacy = true;
+            }
+
             final String[] remaining = line.getArgs();
             if ((remaining == null) || (remaining.length == 0)) {
                 throw new ParseException("require <DIRECTORY> or <FILE> as " +
@@ -319,9 +326,19 @@ public class CMDIValidatorTool {
                     }
 
                     List<TFile> files = Collections.singletonList(archive);
+
                     CMDIValidatorConfig config = builder.build();
-                    CMDIValidator validator = new LegacyCMDIThreadedValidator(
-                            config, handler, files, threadCount);
+                    CMDIValidator validator;
+                    
+                    if (useLegacy) {
+                        logger.warn("using legacy validator");
+                        validator = new LegacyCMDIThreadedValidator(config,
+                                handler, files, threadCount);
+                    } else {
+                        validator = new ThreadedCMDIValidator(config,
+                                handler, files, threadCount);
+                    }
+
                     try {
                         validator.start();
                         
@@ -521,6 +538,9 @@ public class CMDIValidatorTool {
                 .desc("check persistent identifiers syntax and if they resolve properly")
                 .build());
         options.addOptionGroup(g5);
+        options.addOption(Option.builder(OPT_USE_LEGACY)
+                .desc("use legacy validator (development only)")
+                .build());
         return options;
     }
 
