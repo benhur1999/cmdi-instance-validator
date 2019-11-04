@@ -21,6 +21,8 @@ import humanize.Humanize;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.PrintWriter;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,17 +46,19 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.clarin.cmdi.validator.ThreadedCMDIValidatorProcessor;
 import eu.clarin.cmdi.validator.CMDIValidator;
 import eu.clarin.cmdi.validator.CMDIValidatorConfig;
 import eu.clarin.cmdi.validator.CMDIValidatorException;
 import eu.clarin.cmdi.validator.CMDIValidatorInitException;
+import eu.clarin.cmdi.validator.ThreadedCMDIValidator;
+import eu.clarin.cmdi.validator.ThreadedCMDIValidatorProcessor;
 import eu.clarin.cmdi.validator.CMDIValidationHandlerAdapter;
 import eu.clarin.cmdi.validator.CMDIValidationReport;
 import eu.clarin.cmdi.validator.CMDIValidationReport.Message;
 import eu.clarin.cmdi.validator.CMDIValidationReport.Severity;
 import eu.clarin.cmdi.validator.extensions.CheckHandlesExtension;
 import eu.clarin.cmdi.validator.utils.HandleResolver;
+import eu.clarin.cmdi.validator.utils.CMDIValidationReportXMLWriter;
 
 
 public class CMDIValidatorTool {
@@ -75,6 +79,7 @@ public class CMDIValidatorTool {
     private static final String OPT_NO_SCHEMATRON          = "S";
     private static final String OPT_SCHEMATRON_FILE        = "s";
     private static final String OPT_FILENAME_FILTER        = "F";
+    private static final String OPT_REPORT_FILE            = "R";
     private static final String OPT_CHECK_PIDS             = "p";
     private static final String OPT_CHECK_AND_RESOLVE_PIDS = "P";
     private static final Logger logger =
@@ -97,6 +102,7 @@ public class CMDIValidatorTool {
         boolean disableSchematron   = false;
         File schematronFile         = null;
         FileFilter fileFilter       = null;
+        File reportFile             = null;
         boolean checkPids           = false;
         boolean checkAndResolvePids = false;
 
@@ -213,6 +219,15 @@ public class CMDIValidatorTool {
                 }
             }
 
+            if (line.hasOption(OPT_REPORT_FILE)) {
+                String filename = line.getOptionValue(OPT_REPORT_FILE);
+                if ((filename == null) || filename.isEmpty()) {
+                    throw new ParseException("invalid argument for -" +
+                            OPT_REPORT_FILE);
+                }
+                reportFile = new File(filename);
+            }
+
             if (line.hasOption(OPT_CHECK_PIDS)) {
                 checkPids = true;
             }
@@ -276,7 +291,7 @@ public class CMDIValidatorTool {
                     }
 
 
-                    final Handler handler = new Handler(verbose);
+                    final Handler handler = new Handler(verbose, reportFile);
 
                     final CMDIValidatorConfig.Builder builder =
                             new CMDIValidatorConfig.Builder(archive, handler);
@@ -315,7 +330,7 @@ public class CMDIValidatorTool {
                         final CMDIValidator validator =
                                 new CMDIValidator(builder.build());
                         processor.process(validator);
-
+                        
                         /*
                          * Wait until validation is done and report about
                          * progress every now and then ...
@@ -509,6 +524,12 @@ public class CMDIValidatorTool {
                 .longOpt("file-filter")
                 .desc("only process filenames matching a wildcard")
                 .build());
+        options.addOption(Option.builder(OPT_REPORT_FILE)
+                .hasArg()
+                .argName("FILENAME")
+                .longOpt("report-file")
+                .desc("write validation report")
+                .build());
         OptionGroup g5 = new OptionGroup();
         g5.addOption(Option.builder(OPT_CHECK_PIDS)
                 .longOpt("check-pids")
@@ -571,6 +592,7 @@ public class CMDIValidatorTool {
 
     private static class Handler extends CMDIValidationHandlerAdapter {
         private final boolean verbose;
+        private final File reportFile;
         private long started               = -1;
         private long finished              = -1;
         private AtomicInteger filesTotal   = new AtomicInteger();
@@ -579,9 +601,12 @@ public class CMDIValidatorTool {
         private AtomicLong    totalBytes   = new AtomicLong();
         private boolean isCompleted = false;
         private final Object waiter = new Object();
+        private CMDIValidationReportXMLWriter reportFileWriter;
 
-        private Handler(boolean verbose) {
+
+        private Handler(boolean verbose, File reportFile) {
             this.verbose = verbose;
+            this.reportFile = reportFile;
         }
 
 
@@ -650,12 +675,21 @@ public class CMDIValidatorTool {
         public void onJobStarted() throws CMDIValidatorException {
             logger.debug("validation process started");
             this.started = System.currentTimeMillis();
+        
+            if (reportFile != null) {
+                this.reportFileWriter = new CMDIValidationReportXMLWriter(reportFile);    
+            }
         }
 
 
         @Override
         public void onJobFinished(final CMDIValidator.Result result)
                 throws CMDIValidatorException {
+
+            if (reportFileWriter != null) {
+                reportFileWriter.close();
+            }
+            
             finished = System.currentTimeMillis();
             switch (result) {
             case OK:
@@ -682,6 +716,11 @@ public class CMDIValidatorTool {
         public void onValidationReport(final CMDIValidationReport report)
                 throws CMDIValidatorException {
 
+            if (reportFileWriter != null) {
+                reportFileWriter.writeReport(report);
+            }
+            
+            
             final File file = report.getFile();
             if (report.isSkipped()) {
                 filesSkipped.incrementAndGet();
