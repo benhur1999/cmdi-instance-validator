@@ -731,10 +731,10 @@ public class CMDIValidatorTool {
                 }
 
                 switch (report.getResult()) {
-                case SUCCESS:
+                case VALID:
                     logger.debug("file '{}' is valid", file);
                     break;
-                case WARNING:
+                case VALID_WITH_WARINGS:
                     if (verbose) {
                         logger.warn("file '{}' is valid (with warnings):",
                                 file);
@@ -765,7 +765,7 @@ public class CMDIValidatorTool {
                         }
                     }
                     break;
-                case ERROR:
+                case INVALID:
                     filesInvalid.incrementAndGet();
                     if (verbose) {
                         logger.error("file '{}' is invalid:", file);

@@ -55,18 +55,18 @@ public final class CMDIValidationReport {
     }
 
 
-    public boolean isSuccess() {
-        return Result.SUCCESS.equals(result);
+    public boolean isValid() {
+        return Result.VALID.equals(result);
     }
 
 
-    public boolean isWarning() {
-        return Result.WARNING.equals(result);
+    public boolean isValidWithWarnings() {
+        return Result.VALID_WITH_WARINGS.equals(result);
     }
 
 
-    public boolean isError() {
-        return Result.ERROR.equals(result);
+    public boolean isInvalid() {
+        return Result.INVALID.equals(result);
     }
 
 
@@ -128,7 +128,7 @@ public final class CMDIValidationReport {
 
 
     public enum Result {
-        SUCCESS, WARNING, ERROR, SKIPPED
+        VALID, VALID_WITH_WARINGS, INVALID, SKIPPED
     } // enum Result
 
 

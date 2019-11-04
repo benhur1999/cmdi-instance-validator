@@ -109,13 +109,13 @@ public final class CMDIValidatonReportBuilder {
         } else {
             switch (highestSeverity) {
             case INFO:
-                result = Result.SUCCESS;
+                result = Result.VALID;
                 break;
             case WARNING:
-                result = Result.WARNING;
+                result = Result.VALID_WITH_WARINGS;
                 break;
             case ERROR:
-                result = Result.ERROR;
+                result = Result.INVALID;
                 break;
             default:
                 /* NOT-REACH */

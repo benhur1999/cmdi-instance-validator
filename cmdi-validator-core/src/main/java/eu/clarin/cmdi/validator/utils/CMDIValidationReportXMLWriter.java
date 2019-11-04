@@ -62,17 +62,17 @@ public class CMDIValidationReportXMLWriter {
             writer.writeStartElement("file");
             String result;
             switch (report.getResult()) {
-            case ERROR:
-                result = "error";
+            case VALID:
+                result = "valid";
+                break;
+            case VALID_WITH_WARINGS:
+                result = "valid-with-warnings";
+                break;
+            case INVALID:
+                result = "invalid";
                 break;
             case SKIPPED:
                 result = "skipped";
-                break;
-            case SUCCESS:
-                result = "success";
-                break;
-            case WARNING:
-                result = "warning";
                 break;
             default:
                 result = "unknown";
