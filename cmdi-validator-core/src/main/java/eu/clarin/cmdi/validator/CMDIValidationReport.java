@@ -45,6 +45,11 @@ public final class CMDIValidationReport {
     }
 
 
+    public long getFileSize() {
+        return file.length();
+    }
+
+
     public Result getResult() {
         return result;
     }
