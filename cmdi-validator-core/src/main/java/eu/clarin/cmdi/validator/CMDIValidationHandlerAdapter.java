@@ -25,7 +25,7 @@ public class CMDIValidationHandlerAdapter implements CMDIValidationHandler {
 
 
     @Override
-    public void onJobFinished(final CMDILegacyValidator.Result result)
+    public void onJobFinished(final LegacyCMDIValidator.Result result)
             throws CMDIValidatorException {
     }
 

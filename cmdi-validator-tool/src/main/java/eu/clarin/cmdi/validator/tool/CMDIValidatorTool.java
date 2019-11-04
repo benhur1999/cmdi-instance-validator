@@ -44,11 +44,11 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.clarin.cmdi.validator.CMDILegacyValidator;
+import eu.clarin.cmdi.validator.LegacyCMDIValidator;
 import eu.clarin.cmdi.validator.CMDIValidatorConfig;
 import eu.clarin.cmdi.validator.CMDIValidatorException;
 import eu.clarin.cmdi.validator.CMDIValidatorInitException;
-import eu.clarin.cmdi.validator.ThreadedCMDIValidatorProcessor;
+import eu.clarin.cmdi.validator.LegacyThreadedCMDIValidatorProcessor;
 import eu.clarin.cmdi.validator.CMDIValidationHandlerAdapter;
 import eu.clarin.cmdi.validator.CMDIValidationReport;
 import eu.clarin.cmdi.validator.CMDIValidationReport.Message;
@@ -240,7 +240,7 @@ public class CMDIValidatorTool {
 
             final org.apache.log4j.Logger log =
                     org.apache.log4j.Logger.getLogger(
-                            CMDILegacyValidator.class.getPackage().getName());
+                            LegacyCMDIValidator.class.getPackage().getName());
             if (debugging > 0) {
                 appender.setLayout(
                         new org.apache.log4j.PatternLayout("[%p] %t: %m%n"));
@@ -320,12 +320,12 @@ public class CMDIValidatorTool {
                         builder.extension(checkHandleExtension);
                     }
 
-                    final ThreadedCMDIValidatorProcessor processor =
-                            new ThreadedCMDIValidatorProcessor(threadCount);
+                    final LegacyThreadedCMDIValidatorProcessor processor =
+                            new LegacyThreadedCMDIValidatorProcessor(threadCount);
                     try {
                         processor.start();
-                        final CMDILegacyValidator validator =
-                                new CMDILegacyValidator(builder.build());
+                        final LegacyCMDIValidator validator =
+                                new LegacyCMDIValidator(builder.build());
                         processor.process(validator);
                         
                         /*
@@ -680,7 +680,7 @@ public class CMDIValidatorTool {
 
 
         @Override
-        public void onJobFinished(final CMDILegacyValidator.Result result)
+        public void onJobFinished(final LegacyCMDIValidator.Result result)
                 throws CMDIValidatorException {
 
             if (reportFileWriter != null) {
