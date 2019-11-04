@@ -26,7 +26,7 @@ public class LegacyCMDIThreadedValidator extends CMDIValidator {
         processor = new LegacyThreadedCMDIValidatorProcessor(threads);
         processor.start();
 
-        validator = new LegacyCMDIValidator(config,
+        validator = new LegacyCMDIValidator(config, files,
                 new LegacyCMDIValidator.ValidationHandlerFacade() {
             
             @Override

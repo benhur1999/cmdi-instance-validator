@@ -16,8 +16,6 @@
  */
 package eu.clarin.cmdi.validator;
 
-import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,16 +34,10 @@ public final class LegacyCMDIValidator {
     private State state = State.INIT;
     private CMDIValidator.Result result = null;
 
-    
+
     public LegacyCMDIValidator(final CMDIValidatorConfig config,
-            final ValidationHandlerFacade handler)
+            final List<TFile> files, ValidationHandlerFacade handler)
             throws CMDIValidatorInitException {
-        this(config, config.getRoot(), handler);
-    }
-
-
-    public LegacyCMDIValidator(final CMDIValidatorConfig config, final File src,
-            ValidationHandlerFacade handler) throws CMDIValidatorInitException {
         if (config == null) {
             throw new NullPointerException("config == null");
         }
@@ -55,11 +47,7 @@ public final class LegacyCMDIValidator {
         /*
          * other stuff
          */
-        final List<TFile> files = Collections.singletonList(new TFile(src));
         this.files = new FileEnumerator(files, config.getFileFilter());
-        if (config.getHandler() == null) {
-            throw new NullPointerException("handler == null");
-        }
         this.handler = handler;
     }
 

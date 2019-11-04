@@ -24,8 +24,6 @@ import java.util.List;
 
 
 public class CMDIValidatorConfig {
-    private final File root;
-    private final CMDIValidationHandler handler;
     private FileFilter fileFilter = null;
     private long maxFileSize = 0;
     private File schemaCacheDirectory = null;
@@ -37,21 +35,7 @@ public class CMDIValidatorConfig {
     private int socketTimeout = 60000;
 
 
-    private CMDIValidatorConfig(final File root,
-            final CMDIValidationHandler handler) {
-        if (root == null) {
-            throw new NullPointerException("root = null");
-        }
-        if (handler == null) {
-            throw new NullPointerException("handler == null");
-        }
-        this.root    = root;
-        this.handler = handler;
-    }
-
-
-    public File getRoot() {
-        return root;
+    private CMDIValidatorConfig() {
     }
 
 
@@ -62,11 +46,6 @@ public class CMDIValidatorConfig {
 
     public long getMaxFileSize() {
         return maxFileSize;
-    }
-
-
-    public CMDIValidationHandler getHandler() {
-        return handler;
     }
 
 
@@ -120,7 +99,7 @@ public class CMDIValidatorConfig {
             if (handler == null) {
                 throw new NullPointerException("handler == null");
             }
-            this.config = new CMDIValidatorConfig(root, handler);
+            this.config = new CMDIValidatorConfig();
         }
 
 
