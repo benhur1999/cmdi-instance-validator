@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class LegacyThreadedCMDIValidatorProcessor implements LegacyCMDIValidatorProcessor {
+public class LegacyThreadedCMDIValidatorProcessor {
     private static final Logger logger =
             LoggerFactory.getLogger(LegacyThreadedCMDIValidatorProcessor.class);
     private final int threads;
@@ -88,7 +88,6 @@ public class LegacyThreadedCMDIValidatorProcessor implements LegacyCMDIValidator
     }
 
 
-    @Override
     public void process(final LegacyCMDIValidator validator)
             throws CMDIValidatorException {
         if (validator == null) {

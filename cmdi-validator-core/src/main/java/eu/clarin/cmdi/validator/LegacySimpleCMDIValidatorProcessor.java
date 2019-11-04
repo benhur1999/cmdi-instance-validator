@@ -16,9 +16,8 @@
  */
 package eu.clarin.cmdi.validator;
 
-public class LegacySimpleCMDIValidatorProcessor implements LegacyCMDIValidatorProcessor {
+public class LegacySimpleCMDIValidatorProcessor {
 
-    @Override
     public void process(final LegacyCMDIValidator validator)
             throws CMDIValidatorException {
         if (validator == null) {
