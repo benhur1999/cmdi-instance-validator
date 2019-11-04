@@ -21,8 +21,6 @@ import humanize.Humanize;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.PrintWriter;
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,7 +48,6 @@ import eu.clarin.cmdi.validator.CMDIValidator;
 import eu.clarin.cmdi.validator.CMDIValidatorConfig;
 import eu.clarin.cmdi.validator.CMDIValidatorException;
 import eu.clarin.cmdi.validator.CMDIValidatorInitException;
-import eu.clarin.cmdi.validator.ThreadedCMDIValidator;
 import eu.clarin.cmdi.validator.ThreadedCMDIValidatorProcessor;
 import eu.clarin.cmdi.validator.CMDIValidationHandlerAdapter;
 import eu.clarin.cmdi.validator.CMDIValidationReport;
@@ -325,8 +322,8 @@ public class CMDIValidatorTool {
 
                     final ThreadedCMDIValidatorProcessor processor =
                             new ThreadedCMDIValidatorProcessor(threadCount);
-                    processor.start();
                     try {
+                        processor.start();
                         final CMDIValidator validator =
                                 new CMDIValidator(builder.build());
                         processor.process(validator);
