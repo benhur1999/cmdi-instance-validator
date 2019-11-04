@@ -249,7 +249,7 @@ public class CMDIValidatorWorkerFactory {
                 throw new CMDIValidatorInitException("internal error", e);
             }
         } else {
-            schema = CMDILegacyValidator.class.getResource(DEFAULT_SCHEMATRON_SCHEMA);
+            schema = CMDIValidatorWorkerFactory.class.getResource(DEFAULT_SCHEMATRON_SCHEMA);
             if (schema == null) {
                 throw new CMDIValidatorInitException(
                         "cannot locate bundled Schematron schema: " +
@@ -283,7 +283,7 @@ public class CMDIValidatorWorkerFactory {
             throws CMDIValidatorInitException {
         try {
             logger.debug("loading stylesheet '{}'", name);
-            final URL uri = CMDILegacyValidator.class.getResource(name);
+            final URL uri = CMDIValidatorWorkerFactory.class.getResource(name);
             if (uri != null) {
                 DocumentBuilder builder = processor.newDocumentBuilder();
                 XdmNode source =
