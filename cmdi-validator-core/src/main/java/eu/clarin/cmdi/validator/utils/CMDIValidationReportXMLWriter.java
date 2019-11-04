@@ -80,8 +80,7 @@ public class CMDIValidationReportXMLWriter {
             }
             writer.writeAttribute("result", result);
             writer.writeAttribute("name", report.getFile().toString());
-            writer.writeAttribute("size",
-                    Long.toString(report.getFile().length()));
+            writer.writeAttribute("size", Long.toString(report.getFileSize()));
             if (report.getMessageCount() > 0) {
                 writer.writeStartElement("messages");
                 String severity;
