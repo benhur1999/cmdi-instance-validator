@@ -29,25 +29,28 @@ public class LegacyCMDIThreadedValidator extends CMDIValidator {
         validator = new LegacyCMDIValidator(config, files,
                 new LegacyCMDIValidator.ValidationHandlerFacade() {
             
-            @Override
-            public void onJobStarted() throws CMDIValidatorException {
-                handleProcessingStarted();
-            }
+                    @Override
+                    public void onJobStarted() throws CMDIValidatorException {
+                        synchronized (this) {
+                            handleProcessingStarted();
+                        } // synchronized (this)
+                    }
             
-            
-            @Override
+                    @Override
                     public void onJobFinished(CMDIValidator.Result result)
                             throws CMDIValidatorException {
+                        synchronized (this) {
                         handleProcessingFinished(result);
-            }
+                        } // synchronized (this)
+                    }
 
-            @Override
-            public void onValidationReport(CMDIValidationReport report)
-                    throws CMDIValidatorException {
-                synchronized (this) {
-                    handlePostValidationReport(report);
-                }
-            }
+                    @Override
+                    public void onValidationReport(CMDIValidationReport report)
+                            throws CMDIValidatorException {
+                        synchronized (this) {
+                            handlePostValidationReport(report);
+                        } // synchronized (this)
+                    }
         });
         processor.process(validator);
     }
