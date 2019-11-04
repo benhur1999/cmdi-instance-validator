@@ -2,7 +2,6 @@ package eu.clarin.cmdi.validator;
 
 import java.util.List;
 
-import eu.clarin.cmdi.validator.LegacyCMDIValidator.Result;
 import net.java.truevfs.access.TFile;
 
 public class LegacyCMDIThreadedValidator extends CMDIValidator {
@@ -35,8 +34,9 @@ public class LegacyCMDIThreadedValidator extends CMDIValidator {
             
             
             @Override
-            public void onJobFinished(Result result) throws CMDIValidatorException {
-                handleProcessingFinished(result);
+                    public void onJobFinished(CMDIValidator.Result result)
+                            throws CMDIValidatorException {
+                        handleProcessingFinished(result);
             }
 
             @Override

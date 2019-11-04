@@ -22,7 +22,7 @@ public interface CMDIValidationHandler {
     public void onJobStarted() throws CMDIValidatorException;
 
 
-    public void onJobFinished(final LegacyCMDIValidator.Result result)
+    public void onJobFinished(final CMDIValidator.Result result)
             throws CMDIValidatorException;
 
 

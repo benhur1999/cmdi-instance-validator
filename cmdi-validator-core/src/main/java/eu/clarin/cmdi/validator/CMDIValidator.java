@@ -67,7 +67,7 @@ public abstract class CMDIValidator {
     }
 
 
-    protected final void handleProcessingFinished(LegacyCMDIValidator.Result result)
+    protected final void handleProcessingFinished(CMDIValidator.Result result)
             throws CMDIValidatorException {
         finished = System.nanoTime();
         // invoke user handler
@@ -100,7 +100,11 @@ public abstract class CMDIValidator {
         handler.onValidationReport(report);
     }
 
-    
+
+    public enum Result {
+        OK, ABORTED, ERROR
+    }
+
     public static final class Statistics {
         private final int filesTotal;
         private final int filesValidCount;

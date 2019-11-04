@@ -27,9 +27,6 @@ import net.java.truevfs.access.TFile;
 
 
 public final class LegacyCMDIValidator {
-    public enum Result {
-        OK, ABORTED, ERROR
-    }
     private final CMDIValidatorWorkerFactory workerFactory;
     private final FileEnumerator files;
     private final ValidationHandlerFacade handler;
@@ -37,7 +34,7 @@ public final class LegacyCMDIValidator {
             new ConcurrentHashMap<Thread, ThreadContext>();
     private final AtomicInteger threadsProcessing = new AtomicInteger();
     private State state = State.INIT;
-    private Result result = null;
+    private CMDIValidator.Result result = null;
 
     
     public LegacyCMDIValidator(final CMDIValidatorConfig config,
@@ -78,7 +75,7 @@ public final class LegacyCMDIValidator {
                 state = State.DONE;
                 files.flush();
                 if (result == null) {
-                    result = Result.ABORTED;
+                    result = CMDIValidator.Result.ABORTED;
                 }
             }
         } // synchronized (this)
@@ -130,7 +127,7 @@ public final class LegacyCMDIValidator {
             synchronized (this) {
                 state = State.DONE;
                 if (result == null) {
-                    result = Result.ERROR;
+                    result = CMDIValidator.Result.ERROR;
                 }
             } // synchronized (this)
             if (e instanceof CMDIValidatorException) {
@@ -145,7 +142,7 @@ public final class LegacyCMDIValidator {
                     if (state == State.DONE) {
                         state = State.FINI;
                         if (result == null) {
-                            result = Result.OK;
+                            result = CMDIValidator.Result.OK;
                         }
 
                         // notify handler
@@ -193,7 +190,7 @@ public final class LegacyCMDIValidator {
         public void onJobStarted() throws CMDIValidatorException;
 
 
-        public void onJobFinished(LegacyCMDIValidator.Result result)
+        public void onJobFinished(CMDIValidator.Result result)
                 throws CMDIValidatorException;
 
 

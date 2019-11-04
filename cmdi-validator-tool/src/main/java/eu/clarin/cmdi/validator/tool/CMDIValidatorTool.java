@@ -46,7 +46,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.clarin.cmdi.validator.LegacyCMDIValidator;
 import eu.clarin.cmdi.validator.CMDIValidatorConfig;
 import eu.clarin.cmdi.validator.CMDIValidatorException;
 import eu.clarin.cmdi.validator.CMDIValidatorInitException;
@@ -682,7 +681,7 @@ public class CMDIValidatorTool {
 
 
         @Override
-        public void onJobFinished(final LegacyCMDIValidator.Result result)
+        public void onJobFinished(final CMDIValidator.Result result)
                 throws CMDIValidatorException {
 
             if (reportFileWriter != null) {

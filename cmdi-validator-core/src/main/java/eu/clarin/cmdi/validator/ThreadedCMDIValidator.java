@@ -169,7 +169,8 @@ public class ThreadedCMDIValidator extends CMDIValidator {
             }
 
             try {
-                handleProcessingFinished(LegacyCMDIValidator.Result.OK);
+                // FIXME: set proper result!
+                handleProcessingFinished(CMDIValidator.Result.OK);
             } catch (CMDIValidatorException e) {
                 logger.error("error finish: ", e);
             }
