@@ -44,7 +44,7 @@ public class CMDIValidationReportXMLWriter {
     }
 
 
-    public void close() throws CMDIValidatorException {
+    public synchronized void close() throws CMDIValidatorException {
         logger.debug("closing '{}'", file);
         try {
             writer.writeEndElement(); // "report" element
