@@ -243,7 +243,7 @@ public class CMDIValidatorTool {
 
             final org.apache.log4j.Logger log =
                     org.apache.log4j.Logger.getLogger(
-                            LegacyCMDIValidator.class.getPackage().getName());
+                            CMDIValidator.class.getPackage().getName());
             if (debugging > 0) {
                 appender.setLayout(
                         new org.apache.log4j.PatternLayout("[%p] %t: %m%n"));
