@@ -292,7 +292,7 @@ public class ThreadedCMDIValidator extends CMDIValidator {
                 coordinator.handleWorkerException(e);
             } finally {
                 logger.trace("validation worker terminated");
-                logger.info("stalled count = {}, stalled time = {}",
+                logger.trace("stalled count = {}, stalled time = {}",
                         stalledCount, stalledTime);
                 if (workersActive.decrementAndGet() == 0) {
                     coordinator.allWorkersFinished();
