@@ -56,7 +56,8 @@ public class CMDIValidationReportXMLWriter {
     }
 
 
-    public void writeReport(CMDIValidationReport report) throws CMDIValidatorException {
+    public synchronized void writeReport(CMDIValidationReport report)
+            throws CMDIValidatorException {
         try {
             writer.writeStartElement("file");
             String result;
