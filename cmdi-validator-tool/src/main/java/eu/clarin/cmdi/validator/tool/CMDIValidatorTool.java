@@ -717,7 +717,8 @@ public class CMDIValidatorTool {
                 reportFileWriter.writeReport(report);
             }
             
-            
+            filesTotal.incrementAndGet();
+
             final File file = report.getFile();
             if (report.isSkipped()) {
                 filesSkipped.incrementAndGet();
@@ -725,7 +726,6 @@ public class CMDIValidatorTool {
                     logger.info("file '{}' was skipped", file);
                 }
             } else {
-                filesTotal.incrementAndGet();
                 if (file != null) {
                     totalBytes.getAndAdd(file.length());
                 }
