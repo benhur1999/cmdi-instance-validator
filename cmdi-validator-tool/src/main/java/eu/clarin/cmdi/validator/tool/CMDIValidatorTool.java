@@ -21,6 +21,8 @@ import humanize.Humanize;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.PrintWriter;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,7 +50,8 @@ import eu.clarin.cmdi.validator.LegacyCMDIValidator;
 import eu.clarin.cmdi.validator.CMDIValidatorConfig;
 import eu.clarin.cmdi.validator.CMDIValidatorException;
 import eu.clarin.cmdi.validator.CMDIValidatorInitException;
-import eu.clarin.cmdi.validator.LegacyThreadedCMDIValidatorProcessor;
+import eu.clarin.cmdi.validator.LegacyCMDIThreadedValidator;
+import eu.clarin.cmdi.validator.CMDIValidator;
 import eu.clarin.cmdi.validator.CMDIValidationHandlerAdapter;
 import eu.clarin.cmdi.validator.CMDIValidationReport;
 import eu.clarin.cmdi.validator.CMDIValidationReport.Message;
@@ -320,13 +323,12 @@ public class CMDIValidatorTool {
                         builder.extension(checkHandleExtension);
                     }
 
-                    final LegacyThreadedCMDIValidatorProcessor processor =
-                            new LegacyThreadedCMDIValidatorProcessor(threadCount);
+                    List<TFile> files = Collections.singletonList(archive);
+                    CMDIValidatorConfig config = builder.build();
+                    CMDIValidator validator = new LegacyCMDIThreadedValidator(
+                            config, handler, files, threadCount);
                     try {
-                        processor.start();
-                        final LegacyCMDIValidator validator =
-                                new LegacyCMDIValidator(builder.build());
-                        processor.process(validator);
+                        validator.start();
                         
                         /*
                          * Wait until validation is done and report about
@@ -385,7 +387,7 @@ public class CMDIValidatorTool {
                             }
                         } // for (;;)
                     } finally {
-                        processor.shutdown();
+                        validator.shutdown();
                     }
 
                     int fps = -1;

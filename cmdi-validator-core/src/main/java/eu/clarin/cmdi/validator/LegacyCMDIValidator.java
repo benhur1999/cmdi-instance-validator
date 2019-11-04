@@ -32,7 +32,7 @@ public final class LegacyCMDIValidator {
     }
     private final CMDIValidatorWorkerFactory workerFactory;
     private final FileEnumerator files;
-    private final CMDIValidationHandler handler;
+    private final ValidationHandlerFacade handler;
     private final Map<Thread, ThreadContext> contexts =
             new ConcurrentHashMap<Thread, ThreadContext>();
     private final AtomicInteger threadsProcessing = new AtomicInteger();
@@ -40,14 +40,15 @@ public final class LegacyCMDIValidator {
     private Result result = null;
 
     
-    public LegacyCMDIValidator(final CMDIValidatorConfig config)
+    public LegacyCMDIValidator(final CMDIValidatorConfig config,
+            final ValidationHandlerFacade handler)
             throws CMDIValidatorInitException {
-        this(config, config.getRoot(), config.getHandler());
+        this(config, config.getRoot(), handler);
     }
 
 
     public LegacyCMDIValidator(final CMDIValidatorConfig config, final File src,
-            CMDIValidationHandler handler) throws CMDIValidatorInitException {
+            ValidationHandlerFacade handler) throws CMDIValidatorInitException {
         if (config == null) {
             throw new NullPointerException("config == null");
         }
@@ -66,9 +67,9 @@ public final class LegacyCMDIValidator {
     }
 
 
-    public CMDIValidationHandler getHandler() {
-        return handler;
-    }
+//    public CMDIValidationHandler getHandler() {
+//        return handler;
+//    }
 
 
     public void abort() {
@@ -187,5 +188,17 @@ public final class LegacyCMDIValidator {
     }
 
 
+    
+    public interface ValidationHandlerFacade {
+        public void onJobStarted() throws CMDIValidatorException;
+
+
+        public void onJobFinished(LegacyCMDIValidator.Result result)
+                throws CMDIValidatorException;
+
+
+        public void onValidationReport(CMDIValidationReport report)
+                throws CMDIValidatorException;
+    }
 
 } // class CMDIValidator

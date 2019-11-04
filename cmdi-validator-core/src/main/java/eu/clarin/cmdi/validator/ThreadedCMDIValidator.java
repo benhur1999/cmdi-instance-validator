@@ -33,12 +33,9 @@ import org.slf4j.LoggerFactory;
 import net.java.truevfs.access.TFile;
 
 
-public class ThreadedCMDIValidator {
+public class ThreadedCMDIValidator extends CMDIValidator {
     private static final Logger logger =
             LoggerFactory.getLogger(ThreadedCMDIValidator.class);
-    private final CMDIValidatorConfig config;
-    private final CMDIValidationHandler handler;
-    private final List<TFile> files;
     private final int threads;
     private AtomicReference<RunState> runState =
             new AtomicReference<>(RunState.INIT);
@@ -50,25 +47,11 @@ public class ThreadedCMDIValidator {
             final CMDIValidationHandler handler,
             final List<TFile> files,
             final int threads) {
-        if (config == null) {
-            throw new NullPointerException("config == null");
-        }
-        if (handler == null) {
-            throw new NullPointerException("handler == null");
-        }
-        if (files == null) {
-            throw new NullPointerException("files == null");
-        }
-        if (files.isEmpty()) {
-            throw new IllegalArgumentException("files is empty");
-        }
+        super(config, handler, files);
         if (threads < 1) {
             throw new IllegalArgumentException("threads < 1");
         }
-        this.config = config;
-        this.handler = handler;
         this.threads = threads;
-        this.files = files;
     }
 
 
@@ -79,6 +62,7 @@ public class ThreadedCMDIValidator {
     }
 
     
+    @Override
     public void start() throws CMDIValidatorInitException, CMDIValidatorException {
         if (runState.compareAndSet(RunState.INIT, RunState.STARTING)) {
             final FileEnumerator fileEnumerator =
@@ -122,6 +106,15 @@ public class ThreadedCMDIValidator {
     }
 
 
+
+    @Override
+    public void abort() throws CMDIValidatorException {
+        // TODO Auto-generated method stub
+        
+    }
+
+
+    @Override
     public void shutdown() {
         logger.debug("shutdown validation processor");
         executor.shutdownNow();
@@ -165,7 +158,7 @@ public class ThreadedCMDIValidator {
             logger.trace("report writer started");
             try {
                 // signal start
-                handler.onJobStarted();
+                handleProcessingStarted();
 
                 // start other threads
                 goLatch.countDown();
@@ -176,7 +169,7 @@ public class ThreadedCMDIValidator {
             }
 
             try {
-                handler.onJobFinished(CMDILegacyValidator.Result.OK);
+                handleProcessingFinished(LegacyCMDIValidator.Result.OK);
             } catch (CMDIValidatorException e) {
                 logger.error("error finish: ", e);
             }
@@ -207,7 +200,7 @@ public class ThreadedCMDIValidator {
                         }
                         logger.trace("writing {} report(s)", workQueue.size());
                         for (int i = 0; i < workQueue.size(); i++) {
-                            handler.onValidationReport(workQueue.get(i));
+                            handlePostValidationReport(workQueue.get(i));
                         }
                         workQueue.clear();
                     } // for (inner)
