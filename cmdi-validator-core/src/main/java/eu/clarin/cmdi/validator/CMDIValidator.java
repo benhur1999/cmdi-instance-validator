@@ -17,8 +17,8 @@
 package eu.clarin.cmdi.validator;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.util.LinkedList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,8 +57,8 @@ public final class CMDIValidator {
         /*
          * other stuff
          */
-        final TFile root = new TFile(src);
-        this.files       = new FileEnumerator(root, config.getFileFilter());
+        final List<TFile> files = Collections.singletonList(new TFile(src));
+        this.files = new FileEnumerator(files, config.getFileFilter());
         if (config.getHandler() == null) {
             throw new NullPointerException("handler == null");
         }
@@ -185,96 +185,6 @@ public final class CMDIValidator {
         }
 
     }
-
-
-    private static final class FileEnumerator {
-        private final class FileList {
-            private final TFile[] fileList;
-            private int idx = 0;
-
-
-            private FileList(TFile[] fileList) {
-                this.fileList = fileList;
-            }
-
-
-            private TFile nextFile() {
-                while (idx < fileList.length) {
-                    final TFile file = fileList[idx++];
-                    if (file.isDirectory()) {
-                        return file;
-                    }
-                    if ((filter != null) && !filter.accept(file)) {
-                        continue;
-                    }
-                    return file;
-                } // while
-                return null;
-            }
-
-            private int size() {
-                return (fileList.length - idx);
-            }
-        }
-        private final FileFilter filter;
-        private final LinkedList<FileList> stack =
-                new LinkedList<FileList>();
-
-
-        FileEnumerator(TFile root, FileFilter filter) {
-            if (root == null) {
-                throw new NullPointerException("root == null");
-            }
-            if (root.isDirectory()) {
-                pushDirectory(root);
-            } else {
-                stack.add(new FileList(new TFile[] { root }));
-            }
-            this.filter = filter;
-        }
-
-
-        boolean isEmpty() {
-            return stack.isEmpty();
-        }
-
-
-        TFile nextFile() {
-            for (;;) {
-                if (stack.isEmpty()) {
-                    break;
-                }
-                final FileList list = stack.peek();
-                final TFile file = list.nextFile();
-                if ((list.size() == 0) || (file == null)) {
-                    stack.pop();
-                    if (file == null) {
-                        continue;
-                    }
-                }
-                if (file.isDirectory()) {
-                    pushDirectory(file);
-                    continue;
-                }
-                return file;
-            }
-            return null;
-        }
-
-
-        void flush() {
-            stack.clear();
-        }
-
-
-        private void pushDirectory(TFile directory) {
-            final TFile[] files = directory.listFiles();
-            if ((files != null) && (files.length > 0)) {
-                stack.push(new FileList(files));
-            }
-        }
-
-    } // class FileEnumerator
 
 
 
