@@ -7,6 +7,7 @@ import net.java.truevfs.access.TFile;
 public class LegacyCMDIThreadedValidator extends CMDIValidator {
     private final int threads;
     private LegacyThreadedCMDIValidatorProcessor processor;
+    private LegacyCMDIValidator validator; 
 
 
     public LegacyCMDIThreadedValidator(CMDIValidatorConfig config,
@@ -24,7 +25,8 @@ public class LegacyCMDIThreadedValidator extends CMDIValidator {
             throws CMDIValidatorInitException, CMDIValidatorException {
         processor = new LegacyThreadedCMDIValidatorProcessor(threads);
         processor.start();
-        final LegacyCMDIValidator validator = new LegacyCMDIValidator(config,
+
+        validator = new LegacyCMDIValidator(config,
                 new LegacyCMDIValidator.ValidationHandlerFacade() {
             
             @Override
@@ -53,6 +55,9 @@ public class LegacyCMDIThreadedValidator extends CMDIValidator {
 
     @Override
     public void abort() throws CMDIValidatorException {
+        if (validator != null) {
+            validator.abort();
+        }
     }
 
 

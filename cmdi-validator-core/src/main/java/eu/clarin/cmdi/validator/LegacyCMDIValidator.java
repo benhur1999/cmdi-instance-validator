@@ -73,7 +73,6 @@ public final class LegacyCMDIValidator {
         synchronized (this) {
             if ((state == State.INIT) || (state == State.RUN)) {
                 state = State.DONE;
-                files.flush();
                 if (result == null) {
                     result = CMDIValidator.Result.ABORTED;
                 }
