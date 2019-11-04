@@ -28,24 +28,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class ThreadedCMDIValidatorProcessor implements CMDIValidatorProcessor {
+public class LegacyThreadedCMDIValidatorProcessor implements LegacyCMDIValidatorProcessor {
     private static final Logger logger =
-            LoggerFactory.getLogger(ThreadedCMDIValidatorProcessor.class);
+            LoggerFactory.getLogger(LegacyThreadedCMDIValidatorProcessor.class);
     private final int threads;
-    private final List<CMDILegacyValidator> validators =
-            new ArrayList<CMDILegacyValidator>();
+    private final List<LegacyCMDIValidator> validators =
+            new ArrayList<LegacyCMDIValidator>();
     private int idx = 0;
     private boolean running = false;
     private ThreadGroup workers;
     private ExecutorService executor;
 
 
-    public ThreadedCMDIValidatorProcessor() {
+    public LegacyThreadedCMDIValidatorProcessor() {
         this(Runtime.getRuntime().availableProcessors());
     }
 
 
-    public ThreadedCMDIValidatorProcessor(final int threads) {
+    public LegacyThreadedCMDIValidatorProcessor(final int threads) {
         if (threads < 1) {
             throw new IllegalArgumentException("threads < 1");
         }
@@ -89,7 +89,7 @@ public class ThreadedCMDIValidatorProcessor implements CMDIValidatorProcessor {
 
 
     @Override
-    public void process(final CMDILegacyValidator validator)
+    public void process(final LegacyCMDIValidator validator)
             throws CMDIValidatorException {
         if (validator == null) {
             throw new NullPointerException("validator == null");
@@ -124,7 +124,7 @@ public class ThreadedCMDIValidatorProcessor implements CMDIValidatorProcessor {
 
                 // loop for work ...
                 boolean done = false;
-                CMDILegacyValidator validator = null;
+                LegacyCMDIValidator validator = null;
                 for (;;) {
                     if (Thread.currentThread().isInterrupted()) {
                         break;

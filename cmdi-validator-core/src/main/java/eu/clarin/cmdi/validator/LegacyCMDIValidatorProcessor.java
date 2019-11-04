@@ -16,9 +16,9 @@
  */
 package eu.clarin.cmdi.validator;
 
-public interface CMDIValidatorProcessor {
+public interface LegacyCMDIValidatorProcessor {
 
-    public void process(final CMDILegacyValidator validator)
+    public void process(final LegacyCMDIValidator validator)
             throws CMDIValidatorException;
 
 } // interface CMDIValidatorProcessor
