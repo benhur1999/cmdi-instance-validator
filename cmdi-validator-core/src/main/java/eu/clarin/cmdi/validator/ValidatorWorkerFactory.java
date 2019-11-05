@@ -44,9 +44,9 @@ import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
 import net.sf.saxon.s9api.XsltTransformer;
 
-class CMDIValidatorWorkerFactory {
+class ValidatorWorkerFactory {
     private static final Logger logger =
-            LoggerFactory.getLogger(CMDIValidatorWorkerFactory.class);
+            LoggerFactory.getLogger(ValidatorWorkerFactory.class);
     private static final String SCHEMATATRON_STAGE_1 =
             "/schematron/iso_dsdl_include.xsl";
     private static final String SCHEMATATRON_STAGE_2 =
@@ -65,7 +65,7 @@ class CMDIValidatorWorkerFactory {
     private final List<CMDIValidatorExtension> extensions;
     
 
-    public CMDIValidatorWorkerFactory(CMDIValidatorConfig config)
+    public ValidatorWorkerFactory(CMDIValidatorConfig config)
             throws CMDIValidatorInitException {
         if (config == null) {
             throw new NullPointerException("config == null");
@@ -161,8 +161,8 @@ class CMDIValidatorWorkerFactory {
     }
     
     
-    public CMDIValidatorWorker createWorker() {
-        return new CMDIValidatorWorker(config,
+    public ValidatorWorker createWorker() {
+        return new ValidatorWorker(config,
                 schemaLoader,
                 processor,
                 schematronValidatorExecutable,
@@ -249,7 +249,7 @@ class CMDIValidatorWorkerFactory {
                 throw new CMDIValidatorInitException("internal error", e);
             }
         } else {
-            schema = CMDIValidatorWorkerFactory.class.getResource(DEFAULT_SCHEMATRON_SCHEMA);
+            schema = ValidatorWorkerFactory.class.getResource(DEFAULT_SCHEMATRON_SCHEMA);
             if (schema == null) {
                 throw new CMDIValidatorInitException(
                         "cannot locate bundled Schematron schema: " +
@@ -283,7 +283,7 @@ class CMDIValidatorWorkerFactory {
             throws CMDIValidatorInitException {
         try {
             logger.debug("loading stylesheet '{}'", name);
-            final URL uri = CMDIValidatorWorkerFactory.class.getResource(name);
+            final URL uri = ValidatorWorkerFactory.class.getResource(name);
             if (uri != null) {
                 DocumentBuilder builder = processor.newDocumentBuilder();
                 XdmNode source =

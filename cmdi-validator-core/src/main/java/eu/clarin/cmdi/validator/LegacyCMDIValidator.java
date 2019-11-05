@@ -25,7 +25,7 @@ import net.java.truevfs.access.TFile;
 
 
 final class LegacyCMDIValidator {
-    private final CMDIValidatorWorkerFactory workerFactory;
+    private final ValidatorWorkerFactory workerFactory;
     private final FileEnumerator files;
     private final ValidationHandlerFacade handler;
     private final Map<Thread, ThreadContext> contexts =
@@ -42,7 +42,7 @@ final class LegacyCMDIValidator {
             throw new NullPointerException("config == null");
         }
 
-        this.workerFactory = new CMDIValidatorWorkerFactory(config);
+        this.workerFactory = new ValidatorWorkerFactory(config);
 
         /*
          * other stuff
@@ -149,7 +149,7 @@ final class LegacyCMDIValidator {
 
 
     private final class ThreadContext implements CMDIValidationReportSink {
-        private final CMDIValidatorWorker worker;
+        private final ValidatorWorker worker;
 
         private ThreadContext() {
             this.worker = workerFactory.createWorker();

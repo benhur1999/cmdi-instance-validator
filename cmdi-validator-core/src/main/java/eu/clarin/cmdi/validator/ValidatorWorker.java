@@ -69,9 +69,9 @@ import net.sf.saxon.s9api.XsltTransformer;
 import net.sf.saxon.trans.UncheckedXPathException;
 
 
-class CMDIValidatorWorker {
+class ValidatorWorker {
     private static final Logger logger =
-            LoggerFactory.getLogger(CMDIValidatorWorker.class);
+            LoggerFactory.getLogger(ValidatorWorker.class);
     private static final int INITAL_SYMBOL_TABLE_SIZE = 16141;
     private static final String XML_SCHEMA_LOCATION =
             "http://www.w3.org/2001/xml.xsd";
@@ -102,7 +102,7 @@ class CMDIValidatorWorker {
             new CMDIValidatonReportBuilder();
 
 
-    public CMDIValidatorWorker(final CMDIValidatorConfig config,
+    public ValidatorWorker(final CMDIValidatorConfig config,
             final CMDISchemaLoader schemaLoader,
             final Processor processor,
             final XsltExecutable schematronValidatorExecutable,

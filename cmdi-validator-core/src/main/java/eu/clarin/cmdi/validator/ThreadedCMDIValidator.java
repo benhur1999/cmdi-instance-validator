@@ -67,8 +67,8 @@ public class ThreadedCMDIValidator extends CMDIValidator {
         if (runState.compareAndSet(RunState.INIT, RunState.STARTING)) {
             final FileEnumerator fileEnumerator =
                     new FileEnumerator(files, config.getFileFilter());
-            final CMDIValidatorWorkerFactory workerFactory =
-                    new CMDIValidatorWorkerFactory(config);
+            final ValidatorWorkerFactory workerFactory =
+                    new ValidatorWorkerFactory(config);
 
             final CountDownLatch goLatch = new CountDownLatch(1);
 
@@ -243,7 +243,7 @@ public class ThreadedCMDIValidator extends CMDIValidator {
             implements Runnable, CMDIValidationReportSink {
         private final CountDownLatch goLatch;
         private final AtomicInteger workersActive;
-        private final CMDIValidatorWorker worker;
+        private final ValidatorWorker worker;
         private final FileEnumerator fileEnumerator;
         private final BlockingQueue<CMDIValidationReport> reportsQueue;
         private int stalledCount = 0;
@@ -252,7 +252,7 @@ public class ThreadedCMDIValidator extends CMDIValidator {
 
         private WorkerRunnable(final CountDownLatch goLatch,
                 final AtomicInteger workersActive,
-                final CMDIValidatorWorker validationWorker,
+                final ValidatorWorker validationWorker,
                 final FileEnumerator files,
                 final BlockingQueue<CMDIValidationReport> reportsQueue) {
             this.goLatch = goLatch;
