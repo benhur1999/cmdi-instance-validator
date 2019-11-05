@@ -647,7 +647,8 @@ public class CMDIValidatorTool {
         public void onJobStarted() throws CMDIValidatorException {
             logger.debug("validation process started");
             if (reportFile != null) {
-                this.reportFileWriter = new CMDIValidationReportXMLWriter(reportFile);    
+                this.reportFileWriter =
+                        new CMDIValidationReportXMLWriter(reportFile);    
             }
         }
 
