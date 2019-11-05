@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class LegacyThreadedCMDIValidatorProcessor {
+class LegacyThreadedCMDIValidatorProcessor {
     private static final Logger logger =
             LoggerFactory.getLogger(LegacyThreadedCMDIValidatorProcessor.class);
     private final int threads;

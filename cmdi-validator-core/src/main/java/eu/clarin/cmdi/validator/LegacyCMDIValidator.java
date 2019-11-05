@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.java.truevfs.access.TFile;
 
 
-public final class LegacyCMDIValidator {
+final class LegacyCMDIValidator {
     private final CMDIValidatorWorkerFactory workerFactory;
     private final FileEnumerator files;
     private final ValidationHandlerFacade handler;

@@ -44,7 +44,7 @@ import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
 import net.sf.saxon.s9api.XsltTransformer;
 
-public class CMDIValidatorWorkerFactory {
+class CMDIValidatorWorkerFactory {
     private static final Logger logger =
             LoggerFactory.getLogger(CMDIValidatorWorkerFactory.class);
     private static final String SCHEMATATRON_STAGE_1 =

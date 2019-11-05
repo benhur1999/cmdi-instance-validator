@@ -69,7 +69,7 @@ import net.sf.saxon.s9api.XsltTransformer;
 import net.sf.saxon.trans.UncheckedXPathException;
 
 
-public class CMDIValidatorWorker {
+class CMDIValidatorWorker {
     private static final Logger logger =
             LoggerFactory.getLogger(CMDIValidatorWorker.class);
     private static final int INITAL_SYMBOL_TABLE_SIZE = 16141;
