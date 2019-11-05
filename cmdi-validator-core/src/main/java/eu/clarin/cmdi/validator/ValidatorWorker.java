@@ -237,7 +237,9 @@ class ValidatorWorker {
                     if ((pos != -1) && (++pos < msg.length())) {
                         String s1 = msg.substring(pos);
                         String s2 = msg.substring(0, pos - 1);
-                        msg = new StringBuilder(s1).append(" (").append(s2).append(")").toString();
+                        msg = new StringBuilder(s1)
+                                .append(" (").append(s2).append(")")
+                                .toString();
                     }
                 }
                 return msg;
