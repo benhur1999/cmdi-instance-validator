@@ -234,9 +234,9 @@ class ValidatorWorker {
             private String fixupMessage(String msg) {
                 if ((msg != null) && msg.startsWith("cvc-")) {
                     int pos = msg.indexOf(": ");
-                    if ((pos != -1) && (++pos < msg.length())) {
-                        String s1 = msg.substring(pos);
-                        String s2 = msg.substring(0, pos - 1);
+                    if ((pos != -1) && ((pos + 2) < msg.length())) {
+                        String s1 = msg.substring(pos + 2);
+                        String s2 = msg.substring(0, pos);
                         msg = new StringBuilder(s1)
                                 .append(" (").append(s2).append(")")
                                 .toString();
