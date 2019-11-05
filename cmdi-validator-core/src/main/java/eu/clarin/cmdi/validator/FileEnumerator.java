@@ -91,10 +91,4 @@ final class FileEnumerator {
         }
     }
 
-    
-    @Deprecated 
-    public synchronized void flush() {
-        queue.clear();
-    }
-
 } // class FileEnumerator
