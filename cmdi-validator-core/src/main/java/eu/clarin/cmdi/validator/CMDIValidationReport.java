@@ -128,7 +128,34 @@ public final class CMDIValidationReport {
 
 
     public enum Result {
-        VALID, VALID_WITH_WARINGS, INVALID, SKIPPED
+        VALID {
+            @Override
+            public String getXMLString() {
+                return "valid";
+            }
+        },
+        VALID_WITH_WARINGS {
+            @Override
+            public String getXMLString() {
+                return "valid-with-warnings";
+            }
+        },
+        INVALID {
+
+            @Override
+            public String getXMLString() {
+                return "invalid";
+            }
+        },
+        SKIPPED {
+            @Override
+            public String getXMLString() {
+                return "skipped";
+            }
+            
+        };
+        
+        public abstract String getXMLString();
     } // enum Result
 
 
@@ -143,6 +170,11 @@ public final class CMDIValidationReport {
             public int priority() {
                 return 1;
             }
+
+            @Override
+            public String getXMLString() {
+                return "info";
+            }
         },
         WARNING {
             @Override
@@ -153,6 +185,11 @@ public final class CMDIValidationReport {
             @Override
             public int priority() {
                 return 2;
+            }
+
+            @Override
+            public String getXMLString() {
+                return "warning";
             }
         },
         ERROR {
@@ -165,26 +202,59 @@ public final class CMDIValidationReport {
             public int priority() {
                 return 3;
             }
+
+            @Override
+            public String getXMLString() {
+                return "error";
+            }
         };
 
         public abstract String getShortcut();
 
 
         public abstract int priority();
+        
+        public abstract String getXMLString();
     } // enum Severity
     
 
+    public enum Source {
+        XML_PARSER {
+            @Override
+            public String getXMLString() {
+                return "xml-parser";
+            }
+        },
+        SCHEMATRON {
+            @Override
+            public String getXMLString() {
+                return "schematron";
+            }
+        },
+        EXTENSION {
+            @Override
+            public String getXMLString() {
+                return "extension";
+            }
+        };
+
+        public abstract String getXMLString();
+    } // enum Source
+
+    
     public static final class Message {
         private final Severity severity;
+        private final Source source;
         private final int line;
         private final int col;
         private final String message;
         private final Throwable cause;
 
 
-        Message(Severity severity, int line, int col, String message,
-                Throwable cause) {
+        Message(Severity severity, Source source, int line, int col,
+                String message, Throwable cause) {
             this.severity = severity;
+            this.source = source;
             this.line = line;
             this.col = col;
             this.message = message;
@@ -194,6 +264,11 @@ public final class CMDIValidationReport {
 
         public Severity getSeverity() {
             return severity;
+        }
+
+        
+        public Source getSource() {
+            return source;
         }
 
 

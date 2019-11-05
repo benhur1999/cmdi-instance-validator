@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.clarin.cmdi.validator.CMDIValidationReport.Severity;
+import eu.clarin.cmdi.validator.CMDIValidationReport.Source;
 import eu.clarin.cmdi.validator.CMDIValidationReport.Message;
 import eu.clarin.cmdi.validator.CMDIValidationReport.Result;
 
@@ -57,48 +58,45 @@ public final class CMDIValidatonReportBuilder {
     }
 
 
-    public void reportInfo(int line, int col, String message) {
-        reportInfo(line, col, message, null);
+    public void reportInfo(Source source, int line, int col, String message) {
+        reportInfo(source, line, col, message, null);
     }
 
 
-    public void reportInfo(int line, int col, String message,
+    public void reportInfo(Source source, int line, int col, String message,
             Throwable cause) {
-        addMessage(Severity.INFO, line, col, message, cause);
+        addMessage(Severity.INFO, source, line, col, message, cause);
     }
 
 
-    public void reportWarning(int line, int col, String message) {
-        reportWarning(line, col, message, null);
+    public void reportWarning(Source source, int line, int col, String message) {
+        reportWarning(source, line, col, message, null);
     }
 
 
-    public void reportWarning(int line, int col, String message,
+    public void reportWarning(Source source, int line, int col, String message,
             Throwable cause) {
-        addMessage(Severity.WARNING, line, col, message, cause);
+        addMessage(Severity.WARNING, source, line, col, message, cause);
     }
 
 
-    public void reportError(int line, int col, String message) {
-        reportError(line, col, message, null);
+    public void reportError(Source source, int line, int col, String message) {
+        reportError(source, line, col, message, null);
     }
 
 
-    public void reportError(int line, int col, String message,
+    public void reportError(Source source, int line, int col, String message,
             Throwable cause) {
-        addMessage(Severity.ERROR, line, col, message, cause);
+        addMessage(Severity.ERROR, source, line, col, message, cause);
     }
 
 
-    private void addMessage(final Severity severity,
-            final int line,
-            final int col,
-            final String message,
-            final Throwable cause) {
+    private void addMessage(Severity severity, Source source, int line, int col,
+            String message, Throwable cause) {
         if (severity.priority() > highestSeverity.priority()) {
             highestSeverity = severity;
         }
-        messages.add(new Message(severity, line, col, message, cause));
+        messages.add(new Message(severity, source, line, col, message, cause));
     }
 
 

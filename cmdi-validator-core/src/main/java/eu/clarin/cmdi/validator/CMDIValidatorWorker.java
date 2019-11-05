@@ -47,6 +47,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import eu.clarin.cmdi.validator.CMDIValidationReport.Source;
 import eu.clarin.cmdi.validator.utils.LRUCache;
 import eu.clarin.cmdi.validator.utils.LocationUtils;
 import net.java.truevfs.access.TFile;
@@ -205,7 +206,8 @@ public class CMDIValidatorWorker {
         this.parser.setErrorHandler(new ErrorHandler() {
             @Override
             public void warning(SAXParseException e) throws SAXException {
-                reportWarning(e.getLineNumber(),
+                reportWarning(Source.XML_PARSER,
+                        e.getLineNumber(),
                         e.getColumnNumber(),
                         e.getMessage(),
                         e);
@@ -213,7 +215,8 @@ public class CMDIValidatorWorker {
 
             @Override
             public void error(SAXParseException e) throws SAXException {
-                reportError(e.getLineNumber(),
+                reportError(Source.XML_PARSER,
+                        e.getLineNumber(),
                         e.getColumnNumber(),
                         e.getMessage(),
                         e);
@@ -222,7 +225,7 @@ public class CMDIValidatorWorker {
 
             @Override
             public void fatalError(SAXParseException e) throws SAXException {
-                reportError(e.getLineNumber(),
+                reportError(Source.XML_PARSER, e.getLineNumber(),
                         e.getColumnNumber(),
                         e.getMessage(),
                         e);
@@ -401,11 +404,11 @@ public class CMDIValidatorWorker {
                         column = LocationUtils.getColumnNumber(n);
                     }
                     if ("I".equals(s)) {
-                        reportBuilder.reportInfo(line, column, m);
+                        reportInfo(Source.SCHEMATRON, line, column, m, null);
                     } else if ("W".equals(s)) {
-                        reportBuilder.reportWarning(line, column, m);
+                        reportWarning(Source.SCHEMATRON, line, column, m, null);
                     } else {
-                        reportBuilder.reportError(line, column, m);
+                        reportError(Source.SCHEMATRON, line, column, m, null);
                     }
                 } // for
                 if (xpathCompiler != null) {
@@ -431,17 +434,24 @@ public class CMDIValidatorWorker {
     }
 
 
-    private void reportWarning(int line, int col, String message,
+    private void reportInfo(Source source, int line, int col, String message,
+            Throwable cause) {
+        logger.debug("reporting info: [{}:{}]: {}", line, col, message);
+        reportBuilder.reportWarning(source, line, col, message, cause);
+    }
+
+    
+    private void reportWarning(Source source, int line, int col, String message,
             Throwable cause) {
         logger.debug("reporting warning: [{}:{}]: {}", line, col, message);
-        reportBuilder.reportWarning(line, col, message, cause);
+        reportBuilder.reportWarning(source, line, col, message, cause);
     }
 
 
-    private void reportError(int line, int col, String message,
-            Throwable cause) {
+    private void reportError(Source source, int line, int col,
+            String message, Throwable cause) {
         logger.debug("reporting error: [{}:{}]: {}", line, col, message);
-        reportBuilder.reportError(line, col, message, cause);
+        reportBuilder.reportError(source, line, col, message, cause);
     }
 
 

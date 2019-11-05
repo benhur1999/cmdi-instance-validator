@@ -60,47 +60,17 @@ public class CMDIValidationReportXMLWriter {
             throws CMDIValidatorException {
         try {
             writer.writeStartElement("file");
-            String result;
-            switch (report.getResult()) {
-            case VALID:
-                result = "valid";
-                break;
-            case VALID_WITH_WARINGS:
-                result = "valid-with-warnings";
-                break;
-            case INVALID:
-                result = "invalid";
-                break;
-            case SKIPPED:
-                result = "skipped";
-                break;
-            default:
-                result = "unknown";
-                break;
-            }
-            writer.writeAttribute("result", result);
+            writer.writeAttribute("result", report.getResult().getXMLString());
             writer.writeAttribute("name", report.getFile().toString());
             writer.writeAttribute("size", Long.toString(report.getFileSize()));
             if (report.getMessageCount() > 0) {
                 writer.writeStartElement("messages");
-                String severity;
                 for (CMDIValidationReport.Message message : report.getMessages()) {
                     writer.writeStartElement("message");
-                    switch (message.getSeverity()) {
-                    case INFO:
-                        severity = "info";
-                        break;
-                    case WARNING:
-                        severity = "warning";
-                        break;
-                    case ERROR:
-                        severity = "error";
-                        break;
-                    default:
-                        severity = "unknown";
-                        break;
-                    } // switch
-                    writer.writeAttribute("severity", severity);
+                    writer.writeAttribute("severity",
+                            message.getSeverity().getXMLString());
+                    writer.writeAttribute("source",
+                            message.getSource().getXMLString());
                     if (message.getLineNumber() > 0) {
                         writer.writeAttribute("line",
                                 Integer.toString(message.getLineNumber()));
