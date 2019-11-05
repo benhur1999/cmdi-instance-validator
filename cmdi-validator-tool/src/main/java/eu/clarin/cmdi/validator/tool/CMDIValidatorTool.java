@@ -497,7 +497,6 @@ public class CMDIValidatorTool {
                  .desc("process all files regardless of size")
                  .build());
         options.addOptionGroup(g3);
-        
         options.addOption(Option.builder(OPT_SCHEMA_CACHE_DIR)
                 .hasArg()
                 .argName("DIRECTORY")
