@@ -33,9 +33,9 @@ import org.slf4j.LoggerFactory;
 import net.java.truevfs.access.TFile;
 
 
-public class ThreadedCMDIValidator extends CMDIValidator {
+public class CMDIThreadedValidator extends CMDIValidator {
     private static final Logger logger =
-            LoggerFactory.getLogger(ThreadedCMDIValidator.class);
+            LoggerFactory.getLogger(CMDIThreadedValidator.class);
     private final int threads;
     private AtomicReference<RunState> runState =
             new AtomicReference<>(RunState.INIT);
@@ -43,7 +43,7 @@ public class ThreadedCMDIValidator extends CMDIValidator {
     private CoordinatorThread coordinator;
 
 
-    public ThreadedCMDIValidator(final CMDIValidatorConfig config,
+    public CMDIThreadedValidator(final CMDIValidatorConfig config,
             final CMDIValidationHandler handler,
             final List<TFile> files,
             final int threads) {
@@ -55,7 +55,7 @@ public class ThreadedCMDIValidator extends CMDIValidator {
     }
 
 
-    public ThreadedCMDIValidator(final CMDIValidatorConfig config,
+    public CMDIThreadedValidator(final CMDIValidatorConfig config,
             final CMDIValidationHandler handler,
             final List<TFile> files) {
         this(config, handler, files, Runtime.getRuntime().availableProcessors());

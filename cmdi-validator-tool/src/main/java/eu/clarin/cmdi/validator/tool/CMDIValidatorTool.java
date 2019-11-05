@@ -46,7 +46,7 @@ import eu.clarin.cmdi.validator.CMDIValidatorConfig;
 import eu.clarin.cmdi.validator.CMDIValidatorException;
 import eu.clarin.cmdi.validator.CMDIValidatorInitException;
 import eu.clarin.cmdi.validator.LegacyCMDIThreadedValidator;
-import eu.clarin.cmdi.validator.ThreadedCMDIValidator;
+import eu.clarin.cmdi.validator.CMDIThreadedValidator;
 import eu.clarin.cmdi.validator.CMDIValidator;
 import eu.clarin.cmdi.validator.CMDIValidationHandlerAdapter;
 import eu.clarin.cmdi.validator.CMDIValidationReport;
@@ -335,7 +335,7 @@ public class CMDIValidatorTool {
                         validator = new LegacyCMDIThreadedValidator(config,
                                 handler, files, threadCount);
                     } else {
-                        validator = new ThreadedCMDIValidator(config,
+                        validator = new CMDIThreadedValidator(config,
                                 handler, files, threadCount);
                     }
 
