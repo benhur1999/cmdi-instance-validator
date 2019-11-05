@@ -38,6 +38,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -204,13 +205,9 @@ public class CMDIValidatorTool {
                 schematronFile = new File(name);
             }
             if (line.hasOption(OPT_FILENAME_FILTER)) {
-                String wildcard = line.getOptionValue(OPT_FILENAME_FILTER);
-                if ((wildcard == null) || wildcard.isEmpty()) {
-                    throw new ParseException("invalid argument for -" +
-                            OPT_FILENAME_FILTER);
-                }
+                String[] wildcards = line.getOptionValues(OPT_FILENAME_FILTER);
                 try {
-                    fileFilter = new WildcardFileFilter(wildcard);
+                    fileFilter = new WildcardFileFilter(wildcards, IOCase.SYSTEM);
                 } catch (IllegalArgumentException e) {
                     throw new ParseException("invalid argument for -" +
                             OPT_FILENAME_FILTER);
@@ -570,13 +567,16 @@ public class CMDIValidatorTool {
     }
 
 
-    private static final int countFiles(TFile directory,
-            FileFilter fileFilter) {
+    private static int countFiles(TFile directory, FileFilter fileFilter) {
         int count = 0;
         final TFile[] entries = directory.listFiles();
         if ((entries != null) && (entries.length > 0)) {
             for (TFile entry : entries) {
                 if (entry.isDirectory()) {
+                    if ((fileFilter != null) &&
+                            (entry.isArchive() && !fileFilter.accept(entry))) {
+                        continue;
+                    }
                     count += countFiles(entry, fileFilter);
                 } else {
                     if ((fileFilter != null) && !fileFilter.accept(entry)) {

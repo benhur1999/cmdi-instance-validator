@@ -76,6 +76,9 @@ final class FileEnumerator {
         if (entry.isFile() && filter.accept(entry)) {
             queue.addFirst(entry);
         } else if (entry.isDirectory()) {
+            if (entry.isArchive() && !filter.accept(entry)) {
+                return;
+            }
             TFile[] entries = entry.listFiles();
             if (entries.length > 0) {
                 for (int i = 0; i < entries.length; i++) {
