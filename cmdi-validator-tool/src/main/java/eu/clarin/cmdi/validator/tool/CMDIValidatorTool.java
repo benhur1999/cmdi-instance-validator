@@ -280,6 +280,8 @@ public class CMDIValidatorTool {
                 if (estimate && logger.isInfoEnabled()) {
                     logger.debug("counting files ...");
                     totalFileCount = countFiles(files, fileFilter);
+                    logger.debug("estimated {} files",
+                            totalFileCount);
                 }
 
                 if (threadCount > 1) {
