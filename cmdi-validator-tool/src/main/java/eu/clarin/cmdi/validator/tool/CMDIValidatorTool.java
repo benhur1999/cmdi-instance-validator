@@ -20,7 +20,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.PrintWriter;
 import java.time.Duration;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -234,10 +234,10 @@ public class CMDIValidatorTool {
                 useLegacy = true;
             }
 
-            final String[] remaining = line.getArgs();
-            if ((remaining == null) || (remaining.length == 0)) {
-                throw new ParseException("require <DIRECTORY> or <FILE> as " +
-                        "additional command line parameter");
+            final String[] remainingArgs = line.getArgs();
+            if ((remainingArgs == null) || (remainingArgs.length == 0)) {
+                throw new ParseException("require at leat one <DIRECTORY> or " +
+                        "<FILE> as additional command line parameter");
             }
 
             final org.apache.log4j.Logger log =
@@ -259,160 +259,157 @@ public class CMDIValidatorTool {
                 }
             }
 
-            TFile archive = null;
+            // prepare files list ...
+            List<TFile> files = new ArrayList<>(remainingArgs.length);
+            for (int i = 0; i < remainingArgs.length; i++) {
+                TFile file = new TFile(remainingArgs[i]);
+                if (file.exists()) {
+                    files.add(file);
+                } else {
+                    logger.error("file or directory not found: {}", file);
+                    /* bail early */
+                    System.exit(66); /* EX_NOINPUT */
+                }
+            }
+
             try {
+                /*
+                 * process file(s) ...
+                 */
+                int totalFileCount = -1;
+                if (estimate && logger.isInfoEnabled()) {
+                    logger.debug("counting files ...");
+                    totalFileCount = countFiles(files, fileFilter);
+                }
+
+                if (threadCount > 1) {
+                    logger.debug("using {} threads", threadCount);
+                }
+
+                final Handler handler = new Handler(verbose, reportFile);
+
+                final CMDIValidatorConfig.Builder builder =
+                            new CMDIValidatorConfig.Builder(handler);
+                logger.debug("skipping files larger than {} bytes",
+                        maxFileSize);
+                builder.maxFileSize(maxFileSize);
                 if (schemaCacheDir != null) {
-                    logger.info("using schema cache directory: {}", schemaCacheDir);
+                    logger.info("using schema cache directory: {}",
+                            schemaCacheDir);
+                    builder.schemaCacheDirectory(schemaCacheDir);
                 }
                 if (schematronFile != null) {
-                    logger.info("using Schematron schema from file: {}", schematronFile);
+                    logger.info("using Schematron schema from file: {}",
+                            schematronFile);
+                    builder.schematronSchemaFile(schematronFile);
+                }
+                if (disableSchematron) {
+                    builder.disableSchematron();
+                }
+                if (fileFilter != null) {
+                    builder.fileFilter(fileFilter);
                 }
 
-                /*
-                 * process archive
-                 */
-                archive = new TFile(remaining[0]);
-                if (archive.exists()) {
-                    if (archive.isArchive()) {
-                        logger.info("reading archive '{}'", archive);
+                CheckHandlesExtension checkHandleExtension = null;
+                if (checkPids || checkAndResolvePids) {
+                    if (checkAndResolvePids) {
+                        logger.info("enabling PID validation (syntax and resolving)");
                     } else {
-                        logger.info("reading directory '{}'", archive);
+                        logger.info("enabling PID validation (syntax only)");
                     }
+                    checkHandleExtension =
+                            new CheckHandlesExtension(checkAndResolvePids);
+                    builder.extension(checkHandleExtension);
+                }
 
-                    int totalFileCount = -1;
-                    if (estimate && logger.isInfoEnabled()) {
-                        logger.debug("counting files ...");
-                        totalFileCount = countFiles(archive, fileFilter);
-                    }
-
-                    if (threadCount > 1) {
-                      logger.debug("using {} threads", threadCount);
-                    }
-
-
-                    final Handler handler = new Handler(verbose, reportFile);
-
-                    final CMDIValidatorConfig.Builder builder =
-                            new CMDIValidatorConfig.Builder(handler);
-                    logger.debug("skipping files larger than {} bytes",
-                            maxFileSize);
-                    builder.maxFileSize(maxFileSize);
-                    if (schemaCacheDir != null) {
-                        builder.schemaCacheDirectory(schemaCacheDir);
-                    }
-                    if (schematronFile != null) {
-                        builder.schematronSchemaFile(schematronFile);
-                    }
-                    if (disableSchematron) {
-                        builder.disableSchematron();
-                    }
-                    if (fileFilter != null) {
-                        builder.fileFilter(fileFilter);
-                    }
-
-                    CheckHandlesExtension checkHandleExtension = null;
-                    if (checkPids || checkAndResolvePids) {
-                        if (checkAndResolvePids) {
-                            logger.info("enabling PID validation (syntax and resolving)");
-                        } else {
-                            logger.info("enabling PID validation (syntax only)");
-                        }
-                        checkHandleExtension =
-                                new CheckHandlesExtension(checkAndResolvePids);
-                        builder.extension(checkHandleExtension);
-                    }
-
-                    List<TFile> files = Collections.singletonList(archive);
-
-                    CMDIValidatorConfig config = builder.build();
-                    CMDIValidator validator;
-                    
-                    if (useLegacy) {
-                        logger.warn("using legacy validator");
-                        validator = new LegacyCMDIThreadedValidator(config,
-                                handler, files, threadCount);
-                    } else {
-                        validator = new CMDIThreadedValidator(config,
-                                handler, files, threadCount);
-                    }
-
-                    try {
-                        validator.start();
-                        
-                        /*
-                         * Wait until validation is done and report about
-                         * progress every now and then ...
-                         */
-                        for (;;) {
-                            try {
-                                if (handler.await(progressInterval)) {
-                                    break;
-                                }
-                            } catch (InterruptedException e) {
-                                /* IGNORE */
-                            }
-                            if ((progressInterval > 0) && logger.isInfoEnabled()) {
-                                final CMDIValidator.Statistics s = validator.getStatistics();
-                                int fps = s.getFilesProcessedPerSecond();
-                                long bps = s.getBytesProcessedPerSecond();
-                                if (totalFileCount > 0) {
-                                    float complete = (s.getTotalFilesCount() / (float)  totalFileCount) * 100f;
-                                    logger.info("processed {} files ({}%) in {} ({} files/second, {}/second) ...",
-                                            s.getTotalFilesCount(),
-                                            String.format(LOCALE, "%.2f", complete),
-                                            formatDuration(s.getElapsedTime()),
-                                            ((fps != -1) ? fps : "N/A"),
-                                            ((bps != -1) ? humananizeBytes(bps) : "N/A MB"));
-                                } else {
-                                    logger.info("processed {} files in {} ({} files/second, {}/second) ...",
-                                            s.getTotalFilesCount(),
-                                            formatDuration(s.getElapsedTime()),
-                                            ((fps != -1) ? fps : "N/A"),
-                                            ((bps != -1) ? humananizeBytes(bps) : "N/A MB"));
-                                }
-                                if (logger.isDebugEnabled()) {
-                                    if ((checkHandleExtension != null) &&
-                                            checkHandleExtension.isResolvingHandles()) {
-                                        final HandleResolver.Statistics stats =
-                                                checkHandleExtension.getStatistics();
-                                        logger.debug("[handle resolver stats] total requests: {}, running requests: {}, cache hits: {}, cache misses: {}, current cache size: {}",
-                                                stats.getTotalRequestsCount(),
-                                                stats.getCurrentRequestsCount(),
-                                                stats.getCacheHitCount(),
-                                                stats.getCacheMissCount(),
-                                                stats.getCurrentCacheSize());
-                                    }
-                                }
-                            }
-                        } // for (;;)
-                    } finally {
-                        validator.shutdown();
-                    }
-
-                    CMDIValidator.Statistics s = handler.finalStats;
-                    int fps = s.getFilesProcessedPerSecond();
-                    long bps = s.getBytesProcessedPerSecond();
-
-                    logger.info("time elapsed: {}, validation result: {}% failure rate (files: {} total, {} passed, {} failed, {} skipped; {} total, {} files/second, {}/second)",
-                            formatDuration(s.getElapsedTime()),
-                            String.format(LOCALE, "%.2f", s.getFailureRate() * 100f),
-                            s.getTotalFilesCount(),
-                            s.getValidFilesCount(),
-                            s.getFilesInvalidCount(),
-                            s.getSkippedFilesCount(),
-                            humananizeBytes(s.getTotalBytesCount()),
-                            ((fps != -1) ? fps : "N/A"),
-                            ((bps != -1) ? humananizeBytes(bps) : "N/A MB"));
-                    logger.debug("... done");
+                CMDIValidatorConfig config = builder.build();
+                CMDIValidator validator;
+                if (!useLegacy) {
+                    validator = new CMDIThreadedValidator(config,
+                            handler, files, threadCount);
                 } else {
-                    logger.error("not found: {}", archive);
+                    logger.warn("using legacy validator");
+                    validator = new LegacyCMDIThreadedValidator(config,
+                            handler, files, threadCount);
                 }
+
+                try {
+                    validator.start();
+
+                    /*
+                     * Wait until validation is done and report about
+                     * progress every now and then ...
+                     */
+                    for (;;) {
+                        try {
+                            if (handler.await(progressInterval)) {
+                                break;
+                            }
+                        } catch (InterruptedException e) {
+                            /* IGNORE */
+                        }
+                        if ((progressInterval > 0) && logger.isInfoEnabled()) {
+                            final CMDIValidator.Statistics s = validator.getStatistics();
+                            int fps = s.getFilesProcessedPerSecond();
+                            long bps = s.getBytesProcessedPerSecond();
+                            if (totalFileCount > 0) {
+                                float complete = (s.getTotalFilesCount() / (float)  totalFileCount) * 100f;
+                                logger.info("processed {} files ({}%) in {} ({} files/second, {}/second) ...",
+                                        s.getTotalFilesCount(),
+                                        String.format(LOCALE, "%.2f", complete),
+                                        formatDuration(s.getElapsedTime()),
+                                        ((fps != -1) ? fps : "N/A"),
+                                        ((bps != -1) ? humananizeBytes(bps) : "N/A MB"));
+                            } else {
+                                logger.info("processed {} files in {} ({} files/second, {}/second) ...",
+                                        s.getTotalFilesCount(),
+                                        formatDuration(s.getElapsedTime()),
+                                        ((fps != -1) ? fps : "N/A"),
+                                        ((bps != -1) ? humananizeBytes(bps) : "N/A MB"));
+                            }
+                            if (logger.isDebugEnabled()) {
+                                if ((checkHandleExtension != null) &&
+                                        checkHandleExtension.isResolvingHandles()) {
+                                    final HandleResolver.Statistics stats =
+                                            checkHandleExtension.getStatistics();
+                                    logger.debug("[handle resolver stats] total requests: {}, running requests: {}, cache hits: {}, cache misses: {}, current cache size: {}",
+                                            stats.getTotalRequestsCount(),
+                                            stats.getCurrentRequestsCount(),
+                                            stats.getCacheHitCount(),
+                                            stats.getCacheMissCount(),
+                                            stats.getCurrentCacheSize());
+                                }
+                            }
+                        }
+                    } // for (;;)
+                } finally {
+                    validator.shutdown();
+                }
+
+                CMDIValidator.Statistics s = handler.finalStats;
+                int fps = s.getFilesProcessedPerSecond();
+                long bps = s.getBytesProcessedPerSecond();
+
+                logger.info("time elapsed: {}, validation result: {}% failure rate (files: {} total, {} passed, {} failed, {} skipped; {} total, {} files/second, {}/second)",
+                        formatDuration(s.getElapsedTime()),
+                        String.format(LOCALE, "%.2f", s.getFailureRate() * 100f),
+                        s.getTotalFilesCount(),
+                        s.getValidFilesCount(),
+                        s.getFilesInvalidCount(),
+                        s.getSkippedFilesCount(),
+                        humananizeBytes(s.getTotalBytesCount()),
+                        ((fps != -1) ? fps : "N/A"),
+                        ((bps != -1) ? humananizeBytes(bps) : "N/A MB"));
+                logger.debug("... done");
             } finally {
-                if (archive != null) {
-                    try {
-                        TVFS.umount(archive);
-                    } catch (FsSyncException e) {
-                        logger.error("error unmounting archive", e);
+                for (TFile file : files) {
+                    if (file.isArchive()) {
+                        try {   
+                            TVFS.umount(file);
+                        } catch (FsSyncException e) {
+                            logger.error("error unmounting archive '{}'",
+                                    file, e);
+                        }
                     }
                 }
             }
@@ -567,7 +564,22 @@ public class CMDIValidatorTool {
     }
 
 
-    private static int countFiles(TFile directory, FileFilter fileFilter) {
+    private static int countFiles(List<TFile> files, FileFilter fileFilter) {
+        int count = 0;
+        for (TFile file : files) {
+            if (file.isDirectory()) {
+                count += countFilesInDir(file, fileFilter);
+            } else {
+                if ((fileFilter != null) && !fileFilter.accept(file)) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+    
+    
+    private static int countFilesInDir(TFile directory, FileFilter fileFilter) {
         int count = 0;
         final TFile[] entries = directory.listFiles();
         if ((entries != null) && (entries.length > 0)) {
@@ -577,7 +589,7 @@ public class CMDIValidatorTool {
                             (entry.isArchive() && !fileFilter.accept(entry))) {
                         continue;
                     }
-                    count += countFiles(entry, fileFilter);
+                    count += countFilesInDir(entry, fileFilter);
                 } else {
                     if ((fileFilter != null) && !fileFilter.accept(entry)) {
                         continue;
