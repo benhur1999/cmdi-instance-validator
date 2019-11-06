@@ -572,7 +572,7 @@ public class CMDIValidatorTool {
             if (file.isDirectory()) {
                 count += countFilesInDir(file, fileFilter);
             } else {
-                if ((fileFilter != null) && !fileFilter.accept(file)) {
+                if ((fileFilter != null) && fileFilter.accept(file)) {
                     count++;
                 }
             }
