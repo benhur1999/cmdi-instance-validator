@@ -293,7 +293,7 @@ public class CMDIValidatorTool {
                     final Handler handler = new Handler(verbose, reportFile);
 
                     final CMDIValidatorConfig.Builder builder =
-                            new CMDIValidatorConfig.Builder(archive, handler);
+                            new CMDIValidatorConfig.Builder(handler);
                     logger.debug("skipping files larger than {} bytes",
                             maxFileSize);
                     builder.maxFileSize(maxFileSize);

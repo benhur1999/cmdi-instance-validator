@@ -92,10 +92,7 @@ public class CMDIValidatorConfig {
         private final CMDIValidatorConfig config;
 
 
-        public Builder(final File root, final CMDIValidationHandler handler) {
-            if (root == null) {
-                throw new NullPointerException("root == null");
-            }
+        public Builder(final CMDIValidationHandler handler) {
             if (handler == null) {
                 throw new NullPointerException("handler == null");
             }
