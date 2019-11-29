@@ -216,6 +216,7 @@ public class CMDIThreadedValidator extends CMDIValidator {
 
         private void allWorkersFinished() {
             logger.debug("all workers are finished");
+            run = false;
             CoordinatorThread.this.interrupt();
 //            if (runState.compareAndSet(RunState.RUNNING, RunState.STOPPING) || runState.) 
 //            logger.debug("triggered shutdown");
@@ -227,7 +228,6 @@ public class CMDIThreadedValidator extends CMDIValidator {
 //                }
 //            }
 //
-            run = false;
         }
 
 
