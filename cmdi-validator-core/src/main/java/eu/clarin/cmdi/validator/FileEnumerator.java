@@ -30,7 +30,8 @@ final class FileEnumerator {
     private final FileFilter filter;
 
 
-    FileEnumerator(List<TFile> fileList, FileFilter fileFilter) {
+    FileEnumerator(List<TFile> fileList, FileFilter fileFilter)
+            throws CMDIValidatorInitException {
         if (fileList == null) {
             throw new NullPointerException("files == null");
         }
@@ -56,6 +57,10 @@ final class FileEnumerator {
                     queue.add(file);
                 }
             }
+        }
+        if (queue.isEmpty()) {
+            throw new CMDIValidatorInitException(
+                    "no files added to file enumerator");
         }
     }
 
