@@ -401,11 +401,12 @@ public class CMDIValidatorTool {
                 int fps = s.getFilesProcessedPerSecond();
                 long bps = s.getBytesProcessedPerSecond();
 
-                logger.info("time elapsed: {}, validation result: {}% failure rate (files: {} total, {} passed, {} failed, {} skipped; {} total, {} files/second, {}/second)",
+                logger.info("time elapsed: {}, validation result: {}% failure rate (files: {} total, {} passed, {} warning, {} failed, {} skipped; {} total, {} files/second, {}/second)",
                         formatDuration(s.getElapsedTime()),
                         String.format(LOCALE, "%.2f", s.getFailureRate() * 100f),
                         s.getTotalFilesCount(),
                         s.getValidFilesCount(),
+                        s.getWarningFilesCount(),
                         s.getFilesInvalidCount(),
                         s.getSkippedFilesCount(),
                         humananizeBytes(s.getTotalBytesCount()),
