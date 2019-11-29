@@ -30,7 +30,7 @@ final class FileEnumerator {
     private final FileFilter filter;
 
 
-    FileEnumerator(List<TFile> fileList, FileFilter filter) {
+    FileEnumerator(List<TFile> fileList, FileFilter fileFilter) {
         if (fileList == null) {
             throw new NullPointerException("files == null");
         }
@@ -38,8 +38,8 @@ final class FileEnumerator {
             throw new IllegalArgumentException("files is empty");
         }
 
-        if (filter != null) {
-            this.filter = filter;
+        if (fileFilter != null) {
+            this.filter = fileFilter;
         } else {
             this.filter = new FileFilter() {
                 @Override
@@ -52,7 +52,7 @@ final class FileEnumerator {
             if (file.isArchive()) {
                 addEntries(file, true);
             } else {
-                if (filter.accept(file)) {
+                if (this.filter.accept(file)) {
                     queue.add(file);
                 }
             }
