@@ -48,7 +48,15 @@ final class FileEnumerator {
                 }
             };
         }
-        queue.addAll(fileList);
+        for (TFile file : fileList) {
+            if (file.isArchive()) {
+                addEntries(file, true);
+            } else {
+                if (filter.accept(file)) {
+                    queue.add(file);
+                }
+            }
+        }
     }
 
 
@@ -62,7 +70,7 @@ final class FileEnumerator {
         while (!queue.isEmpty()) {
             TFile entry = queue.removeFirst();
             if (entry.isDirectory()) {
-                addEntries(entry);
+                addEntries(entry, false);
             } else {
                 result = entry;
                 break;
@@ -72,11 +80,12 @@ final class FileEnumerator {
     }
     
 
-    private void addEntries(TFile entry) {
+    private void addEntries(TFile entry, boolean processArchives) {
         if (entry.isFile() && filter.accept(entry)) {
             queue.addFirst(entry);
         } else if (entry.isDirectory()) {
-            if (entry.isArchive() && !filter.accept(entry)) {
+            if (entry.isArchive() &&
+                    !(processArchives || filter.accept(entry))) {
                 return;
             }
             TFile[] entries = entry.listFiles();
