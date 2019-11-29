@@ -88,6 +88,10 @@ class ValidatorWorker {
             "http://apache.org/xml/features/validation/schema-full-checking";
     private static final String HONOUR_ALL_SCHEMA_LOCATIONS_ID =
             "http://apache.org/xml/features/honour-all-schemaLocations";
+    private static final String CMDI_ENEVLOPE_NS_URI =
+            "http://www.clarin.eu/cmd/1";
+    private static final String CMDI_ENVELOPE_SCHEMA_LOCATION =
+            "http://www.clarin.eu/cmd/1/xsd/cmd-envelop.xsd";
     private static final QName SVRL_S = new QName("s");
     private static final QName SVRL_L = new QName("l");
     private final Processor processor;
@@ -162,31 +166,14 @@ class ValidatorWorker {
             }
         });
 
-        try {
-            InputStream stream = null;
-            try {
-                stream = schemaLoader.loadSchemaFile(
-                        XMLConstants.XML_NS_URI, XML_SCHEMA_LOCATION);
-                Grammar grammar = xsdLoader.loadGrammar(new XMLInputSource(
-                        XMLConstants.XML_NS_URI, XML_SCHEMA_LOCATION, null,
-                        stream, null));
-                if (grammar != null) {
-                    pool.cacheGrammars(XML_SCHEMA_GRAMMAR_TYPE,
-                            new Grammar[] { grammar });
-                }
-                pool.lockPool();
-            } finally {
-                if (stream != null) {
-                    stream.close();
-                }
-            }
-        } catch (IOException e) {
-            /*
-             * Should never happen
-             */
-            logger.error("error initaliting thread context", e);
-        }
-
+        // pre-cache bundled schemas
+        precacheSchema(schemaLoader, xsdLoader, pool,
+                XMLConstants.XML_NS_URI, XML_SCHEMA_LOCATION);
+        precacheSchema(schemaLoader, xsdLoader, pool,
+                CMDI_ENEVLOPE_NS_URI, CMDI_ENVELOPE_SCHEMA_LOCATION);
+        // seal grammar pool
+        pool.lockPool();
+        
         XML11Configuration xercesConfig =
                 new XML11Configuration(symbols, pool);
         xercesConfig.setFeature(NAMESPACES_FEATURE_ID, true);
@@ -341,6 +328,38 @@ class ValidatorWorker {
                 }
             }
             reportBuilder.reset();
+        }
+    }
+
+
+    private void precacheSchema(CMDISchemaLoader schemaLoader,
+            XMLSchemaLoader xsdLoader, ShadowCacheXMLGrammarPool pool,
+            String targetNamespace, String schemaLocation) {
+        logger.trace("pre-caching schema: targetNamespace={}, schemaLocation={}",
+                targetNamespace, schemaLocation);
+        try {
+            InputStream stream = null;
+            try {
+                stream = schemaLoader.loadSchemaFile(
+                        targetNamespace, schemaLocation);
+                Grammar grammar = xsdLoader.loadGrammar(new XMLInputSource(
+                        targetNamespace, schemaLocation, null,
+                        stream, null));
+                if (grammar != null) {
+                    pool.cacheGrammars(XML_SCHEMA_GRAMMAR_TYPE,
+                            new Grammar[] { grammar });
+                }
+            } finally {
+                if (stream != null) {
+                    stream.close();
+                }
+            }
+        } catch (IOException e) {
+            /*
+             * Should never happen
+             */
+            logger.error("error loading bundled schema (targetNamespace={}",
+                    targetNamespace, e);
         }
     }
 

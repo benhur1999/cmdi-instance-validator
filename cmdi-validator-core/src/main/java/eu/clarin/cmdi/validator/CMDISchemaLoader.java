@@ -56,6 +56,10 @@ public final class CMDISchemaLoader {
     private static final String USER_AGENT =
             "CMDI-Validator-SchemaLoader/" + Version.getVersion();
     private static final String XML_XSD_RESSOURCE = "/xml.xsd";
+    private static final String CMDI_ENEVLOPE_NS_URI =
+            "http://www.clarin.eu/cmd/1";
+    private static final String CMDI_ENVELOPE_XSD_RESSOURCE =
+            "/cmd-envelop.xsd"; 
     private static final String EXTENSION_XSD   = "xsd";
     private static final String EXTENSION_ERROR = "error";
     private final File cacheDirectory;
@@ -116,13 +120,13 @@ public final class CMDISchemaLoader {
                 targetNamespace, schemaLocation);
         InputStream stream = null;
         if (XMLConstants.XML_NS_URI.equals(targetNamespace)) {
-            stream = this.getClass().getResourceAsStream(XML_XSD_RESSOURCE);
-            if (stream != null) {
-                logger.trace("using bundled schema for '{}'", schemaLocation);
-                return stream;
-            }
-            logger.warn("unable to load bundled schema for '{}', " +
-                    "falling back to download.", schemaLocation);
+            stream = loadBundledSchema(XML_XSD_RESSOURCE, schemaLocation);
+        } else if (CMDI_ENEVLOPE_NS_URI.equals(targetNamespace)) {
+            stream = loadBundledSchema(CMDI_ENVELOPE_XSD_RESSOURCE,
+                    schemaLocation);
+        }
+        if (stream != null) {
+            return stream;
         }
 
         // fall back to file cache ...
@@ -219,6 +223,19 @@ public final class CMDISchemaLoader {
     }
 
 
+    private InputStream loadBundledSchema(String ressource,
+            String schemaLocation) {
+        InputStream stream = this.getClass().getResourceAsStream(ressource);
+        if (stream != null) {
+            logger.trace("using bundled schema for '{}'", schemaLocation);
+        } else {
+            logger.warn("unable to load bundled schema for '{}', " +
+                    "falling back to download.", schemaLocation);
+        }
+        return stream;
+    }
+    
+    
     private void download(File cacheFile, String schemaLocation)
             throws IOException {
         try {
