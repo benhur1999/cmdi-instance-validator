@@ -261,15 +261,24 @@ public class CMDIValidatorTool {
 
             // prepare files list ...
             List<TFile> files = new ArrayList<>(remainingArgs.length);
+            boolean error = false;
             for (int i = 0; i < remainingArgs.length; i++) {
                 TFile file = new TFile(remainingArgs[i]);
                 if (file.exists()) {
-                    files.add(file);
+                    if ((fileFilter != null) && (!file.isDirectory() && !fileFilter.accept(file))) {
+                        logger.error("file is rejected by file-filter: {}", file);
+                        error = true;
+                    } else {
+                        files.add(file);
+                    }
                 } else {
                     logger.error("file or directory not found: {}", file);
-                    /* bail early */
-                    System.exit(66); /* EX_NOINPUT */
+                    error = true;
+                    
                 }
+            }
+            if (error) {
+                System.exit(66); /* EX_NOINPUT */
             }
 
             try {
@@ -572,9 +581,10 @@ public class CMDIValidatorTool {
             if (file.isDirectory()) {
                 count += countFilesInDir(file, fileFilter);
             } else {
-                if ((fileFilter != null) && fileFilter.accept(file)) {
-                    count++;
+                if ((fileFilter != null) && !fileFilter.accept(file)) {
+                    continue;
                 }
+                count++;
             }
         }
         return count;
@@ -587,10 +597,6 @@ public class CMDIValidatorTool {
         if ((entries != null) && (entries.length > 0)) {
             for (TFile entry : entries) {
                 if (entry.isDirectory()) {
-                    if ((fileFilter != null) &&
-                            (entry.isArchive() && !fileFilter.accept(entry))) {
-                        continue;
-                    }
                     count += countFilesInDir(entry, fileFilter);
                 } else {
                     if ((fileFilter != null) && !fileFilter.accept(entry)) {
